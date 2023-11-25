@@ -1,0 +1,15 @@
+{
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-tuvarnauisbuild-prod-184516-authRole",
+      "UnauthRoleArn": "arn:aws:iam::512617552494:role/amplify-tuvarnauisbuild-prod-184516-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::512617552494:role/amplify-tuvarnauisbuild-prod-184516-authRole",
+      "Region": "eu-west-1",
+      "DeploymentBucketName": "amplify-tuvarnauisbuild-prod-184516-deployment",
+      "UnauthRoleName": "amplify-tuvarnauisbuild-prod-184516-unauthRole",
+      "StackName": "amplify-tuvarnauisbuild-prod-184516",
+      "StackId": "arn:aws:cloudformation:eu-west-1:512617552494:stack/amplify-tuvarnauisbuild-prod-184516/03c6bde0-8bb2-11ee-8efe-0a8504a42843",
+      "AmplifyAppId": "d2y1zehmljro8d"
+    }
+  }
+}
