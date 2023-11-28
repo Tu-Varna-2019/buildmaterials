@@ -1,0 +1,38 @@
+type Sales @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  quantitySold: Int
+  salesDate: AWSDate
+  totalPrice: Float
+  employeeID: ID! @index(name: "byEmployee")
+  customerID: ID! @index(name: "byCustomer")
+  materialID: ID! @index(name: "byMaterial")
+}
+
+type Material @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  quantityAvailable: Int
+  price: Float
+  type: String
+  Sales: [Sales] @hasMany(indexName: "byMaterial", fields: ["id"])
+}
+
+type Customer @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  phone: AWSPhone
+  invoiceStatus: Boolean
+  bulstat: String
+  companyName: String
+  Sales: [Sales] @hasMany(indexName: "byCustomer", fields: ["id"])
+}
+
+type Employee @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String
+  phone: AWSPhone
+  molAssigned: String
+  position: String
+  Sales: [Sales] @hasMany(indexName: "byEmployee", fields: ["id"])
+}
+ 
