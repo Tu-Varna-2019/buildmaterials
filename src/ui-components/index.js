@@ -17,6 +17,8 @@ export { default as EditProfile } from "./EditProfile";
 export { default as EmployeeCreateForm } from "./EmployeeCreateForm";
 export { default as EmployeeUpdateForm } from "./EmployeeUpdateForm";
 export { default as Features2x2 } from "./Features2x2";
+export { default as FigBlank } from "./FigBlank";
+export { default as FigHome } from "./FigHome";
 export { default as Filters } from "./Filters";
 export { default as FormCheckout } from "./FormCheckout";
 export { default as HeroLayout1 } from "./HeroLayout1";

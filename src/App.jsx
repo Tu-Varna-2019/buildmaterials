@@ -1,37 +1,100 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
-import { withAuthenticator, Button, Heading } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0);
+import {
+  Authenticator,
+  SelectField,
+  TextField,
+  useAuthenticator,
+} from "@aws-amplify/ui-react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import HomeLayout from "./pages/layouts/home_layout";
+import { ComponentStateProvider } from "./providers/component_provider/provider";
+import { DataModelProvider } from "./providers/data_models/provider";
+import { HelpersProvider } from "./providers/helpers_provider/provider";
 
+const options = ["Position 1", "Position 2", "Position 3"];
+
+const signUpFields = {
+  signUp: {
+    "custom:molAssigned": {
+      placeHolder: "Enter your Mol",
+      isRequired: true,
+      label: "Mol assigned",
+      order: 4,
+    },
+    "custom:position": {
+      placeHolder: "Enter your Position",
+      isRequired: true,
+      label: "Position",
+      order: 4,
+      options: options,
+    },
+  },
+};
+
+export default function App() {
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR 345
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more 33
-      </p>
-    </>
+    // <Authenticator formFields={signUpFields}>
+    <Authenticator
+      initialState="signUp"
+      components={{
+        SignUp: {
+          FormFields() {
+            const { validationErrors } = useAuthenticator();
+
+            return (
+              <>
+                <TextField
+                  label="Name"
+                  placeholder="Enter your name"
+                  errorMessage="Name must not be empty"
+                />
+                <TextField
+                  label="Mol assigned"
+                  placeholder="Enter your Mol"
+                  errorMessage="Mol must not be empty"
+                />
+
+                <SelectField
+                  label="Position"
+                  options={["lions", "tigers", "bears"]}
+                />
+                <Authenticator.SignUp.FormFields />
+              </>
+            );
+          },
+        },
+      }}
+      services={{
+        async validateCustomSignUp(formData) {
+          if (!formData.acknowledgement) {
+            return {
+              acknowledgement: "You must agree to the Terms & Conditions",
+            };
+          }
+        },
+      }}
+    >
+      {({ signOut, user }) => (
+        <main>
+          <h1>Hello {user.username}</h1>
+          <button onClick={signOut}>Sign out</button>
+        </main>
+      )}
+      <BrowserRouter>
+        <HelpersProvider>
+          <DataModelProvider>
+            <ComponentStateProvider>
+              <Routes>
+                <Route path="/" element={<HomeLayout />} />
+              </Routes>
+            </ComponentStateProvider>
+          </DataModelProvider>
+        </HelpersProvider>
+      </BrowserRouter>
+    </Authenticator>
   );
 }
 
-export default App;
+//export default withAuthenticator(App, components.Authenticator);

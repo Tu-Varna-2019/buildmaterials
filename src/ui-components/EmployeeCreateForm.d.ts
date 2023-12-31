@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SelectFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -41,7 +41,7 @@ export declare type EmployeeCreateFormOverridesProps = {
     name?: PrimitiveOverrideProps<TextFieldProps>;
     phone?: PrimitiveOverrideProps<TextFieldProps>;
     molAssigned?: PrimitiveOverrideProps<TextFieldProps>;
-    position?: PrimitiveOverrideProps<TextFieldProps>;
+    position?: PrimitiveOverrideProps<SelectFieldProps>;
     Sales?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type EmployeeCreateFormProps = React.PropsWithChildren<{

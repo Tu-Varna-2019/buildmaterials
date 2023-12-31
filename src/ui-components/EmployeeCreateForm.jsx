@@ -15,6 +15,7 @@ import {
   Grid,
   Icon,
   ScrollView,
+  SelectField,
   Text,
   TextField,
   useTheme,
@@ -478,10 +479,10 @@ export default function EmployeeCreateForm(props) {
         hasError={errors.molAssigned?.hasError}
         {...getOverrideProps(overrides, "molAssigned")}
       ></TextField>
-      <TextField
+      <SelectField
         label="Position"
-        isRequired={false}
-        isReadOnly={false}
+        placeholder="Please select an option"
+        isDisabled={false}
         value={position}
         onChange={(e) => {
           let { value } = e.target;
@@ -505,7 +506,7 @@ export default function EmployeeCreateForm(props) {
         errorMessage={errors.position?.errorMessage}
         hasError={errors.position?.hasError}
         {...getOverrideProps(overrides, "position")}
-      ></TextField>
+      ></SelectField>
       <ArrayField
         onChange={async (items) => {
           let values = items;
