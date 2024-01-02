@@ -8,6 +8,7 @@
 import * as React from "react";
 import { getOverrideProps } from "./utils";
 import {
+  Button,
   Divider,
   Flex,
   Image,
@@ -17,7 +18,7 @@ import {
   View,
 } from "@aws-amplify/ui-react";
 export default function FigHome(props) {
-  const { overrides, ...rest } = props;
+  const { materialType, overrides, ...rest } = props;
   return (
     <View
       width="1920px"
@@ -49,7 +50,7 @@ export default function FigHome(props) {
         {...getOverrideProps(overrides, "NavBarHeader")}
       >
         <View
-          width="1252px"
+          width="1420px"
           height="24px"
           display="block"
           gap="unset"
@@ -149,11 +150,6 @@ export default function FigHome(props) {
             {...getOverrideProps(overrides, "Report")}
           ></Text>
         </View>
-        <Flex
-          width="146px"
-          height="39px"
-          {...getOverrideProps(overrides, "button_logout")}
-        ></Flex>
         <Text
           fontFamily="Itim"
           fontSize="24px"
@@ -385,7 +381,7 @@ export default function FigHome(props) {
         alignItems="unset"
         position="absolute"
         top="129px"
-        left="calc(50% - 47.5px - -19.5px)"
+        left="calc(50% - 47.5px - -0.5px)"
         padding="0px 0px 0px 0px"
         whiteSpace="pre-wrap"
         children="Home&#xA;"
@@ -579,6 +575,20 @@ export default function FigHome(props) {
         orientation="horizontal"
         {...getOverrideProps(overrides, "Divider38654552")}
       ></Divider>
+      <Button
+        width="152px"
+        height="54px"
+        position="absolute"
+        borderRadius="4px"
+        top="25px"
+        left="1394px"
+        backgroundColor="rgba(255,255,255,1)"
+        size="default"
+        isDisabled={false}
+        variation="default"
+        children="Log out"
+        {...getOverrideProps(overrides, "button_logout")}
+      ></Button>
     </View>
   );
 }

@@ -24,25 +24,25 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type EmployeeUpdateFormInputValues = {
     name?: string;
     phone?: string;
-    molAssigned?: string;
-    position?: string;
     Sales?: any[];
+    positionID?: string;
+    mallID?: string;
 };
 export declare type EmployeeUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     phone?: ValidationFunction<string>;
-    molAssigned?: ValidationFunction<string>;
-    position?: ValidationFunction<string>;
     Sales?: ValidationFunction<any>;
+    positionID?: ValidationFunction<string>;
+    mallID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type EmployeeUpdateFormOverridesProps = {
     EmployeeUpdateFormGrid?: PrimitiveOverrideProps<GridProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
     phone?: PrimitiveOverrideProps<TextFieldProps>;
-    molAssigned?: PrimitiveOverrideProps<TextFieldProps>;
-    position?: PrimitiveOverrideProps<TextFieldProps>;
     Sales?: PrimitiveOverrideProps<AutocompleteProps>;
+    positionID?: PrimitiveOverrideProps<AutocompleteProps>;
+    mallID?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type EmployeeUpdateFormProps = React.PropsWithChildren<{
     overrides?: EmployeeUpdateFormOverridesProps | undefined | null;

@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { DividerProps, FlexProps, ImageProps, RatingProps, SelectFieldProps, TextProps, ViewProps } from "@aws-amplify/ui-react";
+import { ButtonProps, DividerProps, FlexProps, ImageProps, RatingProps, SelectFieldProps, TextProps, ViewProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -25,7 +25,6 @@ export declare type FigHomeOverridesProps = {
     Update?: PrimitiveOverrideProps<TextProps>;
     Query?: PrimitiveOverrideProps<TextProps>;
     Report?: PrimitiveOverrideProps<TextProps>;
-    button_logout?: PrimitiveOverrideProps<FlexProps>;
     text_name?: PrimitiveOverrideProps<TextProps>;
     image?: PrimitiveOverrideProps<ImageProps>;
     img_report?: PrimitiveOverrideProps<ImageProps>;
@@ -53,8 +52,11 @@ export declare type FigHomeOverridesProps = {
     Rating?: PrimitiveOverrideProps<RatingProps>;
     "Rate us!"?: PrimitiveOverrideProps<TextProps>;
     Divider38654552?: PrimitiveOverrideProps<DividerProps>;
+    button_logout?: PrimitiveOverrideProps<ButtonProps>;
 } & EscapeHatchProps;
 export declare type FigHomeProps = React.PropsWithChildren<Partial<ViewProps> & {
+    materialType?: any;
+} & {
     overrides?: FigHomeOverridesProps | undefined | null;
 }>;
 export default function FigHome(props: FigHomeProps): React.ReactElement;

@@ -21,8 +21,8 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { listMaterialTypes, listSales } from "../graphql/queries";
-import { createMaterial, updateSales } from "../graphql/mutations";
+import { listMaterials } from "../graphql/queries";
+import { createMaterialType, updateMaterial } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
   items = [],
@@ -179,7 +179,7 @@ function ArrayField({
     </React.Fragment>
   );
 }
-export default function MaterialCreateForm(props) {
+export default function MaterialTypeCreateForm(props) {
   const {
     clearOnSuccess = true,
     onSuccess,
@@ -192,70 +192,40 @@ export default function MaterialCreateForm(props) {
   } = props;
   const initialValues = {
     name: "",
-    quantityAvailable: "",
-    price: "",
-    Sales: [],
-    materialtypeID: undefined,
+    Materials: [],
   };
   const [name, setName] = React.useState(initialValues.name);
-  const [quantityAvailable, setQuantityAvailable] = React.useState(
-    initialValues.quantityAvailable
-  );
-  const [price, setPrice] = React.useState(initialValues.price);
-  const [Sales, setSales] = React.useState(initialValues.Sales);
-  const [SalesLoading, setSalesLoading] = React.useState(false);
-  const [salesRecords, setSalesRecords] = React.useState([]);
-  const [materialtypeID, setMaterialtypeID] = React.useState(
-    initialValues.materialtypeID
-  );
-  const [materialtypeIDLoading, setMaterialtypeIDLoading] =
-    React.useState(false);
-  const [materialtypeIDRecords, setMaterialtypeIDRecords] = React.useState([]);
-  const [selectedMaterialtypeIDRecords, setSelectedMaterialtypeIDRecords] =
-    React.useState([]);
+  const [Materials, setMaterials] = React.useState(initialValues.Materials);
+  const [MaterialsLoading, setMaterialsLoading] = React.useState(false);
+  const [materialsRecords, setMaterialsRecords] = React.useState([]);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     setName(initialValues.name);
-    setQuantityAvailable(initialValues.quantityAvailable);
-    setPrice(initialValues.price);
-    setSales(initialValues.Sales);
-    setCurrentSalesValue(undefined);
-    setCurrentSalesDisplayValue("");
-    setMaterialtypeID(initialValues.materialtypeID);
-    setCurrentMaterialtypeIDValue(undefined);
-    setCurrentMaterialtypeIDDisplayValue("");
+    setMaterials(initialValues.Materials);
+    setCurrentMaterialsValue(undefined);
+    setCurrentMaterialsDisplayValue("");
     setErrors({});
   };
-  const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
+  const [currentMaterialsDisplayValue, setCurrentMaterialsDisplayValue] =
     React.useState("");
-  const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
-  const SalesRef = React.createRef();
-  const [
-    currentMaterialtypeIDDisplayValue,
-    setCurrentMaterialtypeIDDisplayValue,
-  ] = React.useState("");
-  const [currentMaterialtypeIDValue, setCurrentMaterialtypeIDValue] =
+  const [currentMaterialsValue, setCurrentMaterialsValue] =
     React.useState(undefined);
-  const materialtypeIDRef = React.createRef();
+  const MaterialsRef = React.createRef();
   const getIDValue = {
-    Sales: (r) => JSON.stringify({ id: r?.id }),
+    Materials: (r) => JSON.stringify({ id: r?.id }),
   };
-  const SalesIdSet = new Set(
-    Array.isArray(Sales)
-      ? Sales.map((r) => getIDValue.Sales?.(r))
-      : getIDValue.Sales?.(Sales)
+  const MaterialsIdSet = new Set(
+    Array.isArray(Materials)
+      ? Materials.map((r) => getIDValue.Materials?.(r))
+      : getIDValue.Materials?.(Materials)
   );
   const getDisplayValue = {
-    Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
-    materialtypeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    Materials: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
     name: [],
-    quantityAvailable: [],
-    price: [],
-    Sales: [],
-    materialtypeID: [{ type: "Required" }],
+    Materials: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -274,40 +244,8 @@ export default function MaterialCreateForm(props) {
     setErrors((errors) => ({ ...errors, [fieldName]: validationResponse }));
     return validationResponse;
   };
-  const fetchSalesRecords = async (value) => {
-    setSalesLoading(true);
-    const newOptions = [];
-    let newNext = "";
-    while (newOptions.length < autocompleteLength && newNext != null) {
-      const variables = {
-        limit: autocompleteLength * 5,
-        filter: {
-          or: [
-            { quantitySold: { contains: value } },
-            { id: { contains: value } },
-          ],
-        },
-      };
-      if (newNext) {
-        variables["nextToken"] = newNext;
-      }
-      const result = (
-        await client.graphql({
-          query: listSales.replaceAll("__typename", ""),
-          variables,
-        })
-      )?.data?.listSales?.items;
-      var loaded = result.filter(
-        (item) => !SalesIdSet.has(getIDValue.Sales?.(item))
-      );
-      newOptions.push(...loaded);
-      newNext = result.nextToken;
-    }
-    setSalesRecords(newOptions.slice(0, autocompleteLength));
-    setSalesLoading(false);
-  };
-  const fetchMaterialtypeIDRecords = async (value) => {
-    setMaterialtypeIDLoading(true);
+  const fetchMaterialsRecords = async (value) => {
+    setMaterialsLoading(true);
     const newOptions = [];
     let newNext = "";
     while (newOptions.length < autocompleteLength && newNext != null) {
@@ -322,20 +260,21 @@ export default function MaterialCreateForm(props) {
       }
       const result = (
         await client.graphql({
-          query: listMaterialTypes.replaceAll("__typename", ""),
+          query: listMaterials.replaceAll("__typename", ""),
           variables,
         })
-      )?.data?.listMaterialTypes?.items;
-      var loaded = result.filter((item) => materialtypeID !== item.id);
+      )?.data?.listMaterials?.items;
+      var loaded = result.filter(
+        (item) => !MaterialsIdSet.has(getIDValue.Materials?.(item))
+      );
       newOptions.push(...loaded);
       newNext = result.nextToken;
     }
-    setMaterialtypeIDRecords(newOptions.slice(0, autocompleteLength));
-    setMaterialtypeIDLoading(false);
+    setMaterialsRecords(newOptions.slice(0, autocompleteLength));
+    setMaterialsLoading(false);
   };
   React.useEffect(() => {
-    fetchSalesRecords("");
-    fetchMaterialtypeIDRecords("");
+    fetchMaterialsRecords("");
   }, []);
   return (
     <Grid
@@ -347,10 +286,7 @@ export default function MaterialCreateForm(props) {
         event.preventDefault();
         let modelFields = {
           name,
-          quantityAvailable,
-          price,
-          Sales,
-          materialtypeID,
+          Materials,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -390,30 +326,27 @@ export default function MaterialCreateForm(props) {
           });
           const modelFieldsToSave = {
             name: modelFields.name,
-            quantityAvailable: modelFields.quantityAvailable,
-            price: modelFields.price,
-            materialtypeID: modelFields.materialtypeID,
           };
-          const material = (
+          const materialType = (
             await client.graphql({
-              query: createMaterial.replaceAll("__typename", ""),
+              query: createMaterialType.replaceAll("__typename", ""),
               variables: {
                 input: {
                   ...modelFieldsToSave,
                 },
               },
             })
-          )?.data?.createMaterial;
+          )?.data?.createMaterialType;
           const promises = [];
           promises.push(
-            ...Sales.reduce((promises, original) => {
+            ...Materials.reduce((promises, original) => {
               promises.push(
                 client.graphql({
-                  query: updateSales.replaceAll("__typename", ""),
+                  query: updateMaterial.replaceAll("__typename", ""),
                   variables: {
                     input: {
                       id: original.id,
-                      materialID: material.id,
+                      materialtypeID: materialType.id,
                     },
                   },
                 })
@@ -435,7 +368,7 @@ export default function MaterialCreateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "MaterialCreateForm")}
+      {...getOverrideProps(overrides, "MaterialTypeCreateForm")}
       {...rest}
     >
       <TextField
@@ -448,10 +381,7 @@ export default function MaterialCreateForm(props) {
           if (onChange) {
             const modelFields = {
               name: value,
-              quantityAvailable,
-              price,
-              Sales,
-              materialtypeID,
+              Materials,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -466,247 +396,83 @@ export default function MaterialCreateForm(props) {
         hasError={errors.name?.hasError}
         {...getOverrideProps(overrides, "name")}
       ></TextField>
-      <TextField
-        label="Quantity available"
-        isRequired={false}
-        isReadOnly={false}
-        type="number"
-        step="any"
-        value={quantityAvailable}
-        onChange={(e) => {
-          let value = isNaN(parseInt(e.target.value))
-            ? e.target.value
-            : parseInt(e.target.value);
-          if (onChange) {
-            const modelFields = {
-              name,
-              quantityAvailable: value,
-              price,
-              Sales,
-              materialtypeID,
-            };
-            const result = onChange(modelFields);
-            value = result?.quantityAvailable ?? value;
-          }
-          if (errors.quantityAvailable?.hasError) {
-            runValidationTasks("quantityAvailable", value);
-          }
-          setQuantityAvailable(value);
-        }}
-        onBlur={() =>
-          runValidationTasks("quantityAvailable", quantityAvailable)
-        }
-        errorMessage={errors.quantityAvailable?.errorMessage}
-        hasError={errors.quantityAvailable?.hasError}
-        {...getOverrideProps(overrides, "quantityAvailable")}
-      ></TextField>
-      <TextField
-        label="Price"
-        isRequired={false}
-        isReadOnly={false}
-        type="number"
-        step="any"
-        value={price}
-        onChange={(e) => {
-          let value = isNaN(parseFloat(e.target.value))
-            ? e.target.value
-            : parseFloat(e.target.value);
-          if (onChange) {
-            const modelFields = {
-              name,
-              quantityAvailable,
-              price: value,
-              Sales,
-              materialtypeID,
-            };
-            const result = onChange(modelFields);
-            value = result?.price ?? value;
-          }
-          if (errors.price?.hasError) {
-            runValidationTasks("price", value);
-          }
-          setPrice(value);
-        }}
-        onBlur={() => runValidationTasks("price", price)}
-        errorMessage={errors.price?.errorMessage}
-        hasError={errors.price?.hasError}
-        {...getOverrideProps(overrides, "price")}
-      ></TextField>
       <ArrayField
         onChange={async (items) => {
           let values = items;
           if (onChange) {
             const modelFields = {
               name,
-              quantityAvailable,
-              price,
-              Sales: values,
-              materialtypeID,
+              Materials: values,
             };
             const result = onChange(modelFields);
-            values = result?.Sales ?? values;
+            values = result?.Materials ?? values;
           }
-          setSales(values);
-          setCurrentSalesValue(undefined);
-          setCurrentSalesDisplayValue("");
+          setMaterials(values);
+          setCurrentMaterialsValue(undefined);
+          setCurrentMaterialsDisplayValue("");
         }}
-        currentFieldValue={currentSalesValue}
-        label={"Sales"}
-        items={Sales}
-        hasError={errors?.Sales?.hasError}
+        currentFieldValue={currentMaterialsValue}
+        label={"Materials"}
+        items={Materials}
+        hasError={errors?.Materials?.hasError}
         runValidationTasks={async () =>
-          await runValidationTasks("Sales", currentSalesValue)
+          await runValidationTasks("Materials", currentMaterialsValue)
         }
-        errorMessage={errors?.Sales?.errorMessage}
-        getBadgeText={getDisplayValue.Sales}
+        errorMessage={errors?.Materials?.errorMessage}
+        getBadgeText={getDisplayValue.Materials}
         setFieldValue={(model) => {
-          setCurrentSalesDisplayValue(
-            model ? getDisplayValue.Sales(model) : ""
+          setCurrentMaterialsDisplayValue(
+            model ? getDisplayValue.Materials(model) : ""
           );
-          setCurrentSalesValue(model);
+          setCurrentMaterialsValue(model);
         }}
-        inputFieldRef={SalesRef}
+        inputFieldRef={MaterialsRef}
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Sales"
+          label="Materials"
           isRequired={false}
           isReadOnly={false}
-          placeholder="Search Sales"
-          value={currentSalesDisplayValue}
-          options={salesRecords
-            .filter((r) => !SalesIdSet.has(getIDValue.Sales?.(r)))
+          placeholder="Search Material"
+          value={currentMaterialsDisplayValue}
+          options={materialsRecords
+            .filter((r) => !MaterialsIdSet.has(getIDValue.Materials?.(r)))
             .map((r) => ({
-              id: getIDValue.Sales?.(r),
-              label: getDisplayValue.Sales?.(r),
+              id: getIDValue.Materials?.(r),
+              label: getDisplayValue.Materials?.(r),
             }))}
-          isLoading={SalesLoading}
+          isLoading={MaterialsLoading}
           onSelect={({ id, label }) => {
-            setCurrentSalesValue(
-              salesRecords.find((r) =>
+            setCurrentMaterialsValue(
+              materialsRecords.find((r) =>
                 Object.entries(JSON.parse(id)).every(
                   ([key, value]) => r[key] === value
                 )
               )
             );
-            setCurrentSalesDisplayValue(label);
-            runValidationTasks("Sales", label);
+            setCurrentMaterialsDisplayValue(label);
+            runValidationTasks("Materials", label);
           }}
           onClear={() => {
-            setCurrentSalesDisplayValue("");
+            setCurrentMaterialsDisplayValue("");
           }}
           onChange={(e) => {
             let { value } = e.target;
-            fetchSalesRecords(value);
-            if (errors.Sales?.hasError) {
-              runValidationTasks("Sales", value);
+            fetchMaterialsRecords(value);
+            if (errors.Materials?.hasError) {
+              runValidationTasks("Materials", value);
             }
-            setCurrentSalesDisplayValue(value);
-            setCurrentSalesValue(undefined);
-          }}
-          onBlur={() => runValidationTasks("Sales", currentSalesDisplayValue)}
-          errorMessage={errors.Sales?.errorMessage}
-          hasError={errors.Sales?.hasError}
-          ref={SalesRef}
-          labelHidden={true}
-          {...getOverrideProps(overrides, "Sales")}
-        ></Autocomplete>
-      </ArrayField>
-      <ArrayField
-        lengthLimit={1}
-        onChange={async (items) => {
-          let value = items[0];
-          if (onChange) {
-            const modelFields = {
-              name,
-              quantityAvailable,
-              price,
-              Sales,
-              materialtypeID: value,
-            };
-            const result = onChange(modelFields);
-            value = result?.materialtypeID ?? value;
-          }
-          setMaterialtypeID(value);
-          setCurrentMaterialtypeIDValue(undefined);
-        }}
-        currentFieldValue={currentMaterialtypeIDValue}
-        label={"Materialtype id"}
-        items={materialtypeID ? [materialtypeID] : []}
-        hasError={errors?.materialtypeID?.hasError}
-        runValidationTasks={async () =>
-          await runValidationTasks("materialtypeID", currentMaterialtypeIDValue)
-        }
-        errorMessage={errors?.materialtypeID?.errorMessage}
-        getBadgeText={(value) =>
-          value
-            ? getDisplayValue.materialtypeID(
-                materialtypeIDRecords.find((r) => r.id === value) ??
-                  selectedMaterialtypeIDRecords.find((r) => r.id === value)
-              )
-            : ""
-        }
-        setFieldValue={(value) => {
-          setCurrentMaterialtypeIDDisplayValue(
-            value
-              ? getDisplayValue.materialtypeID(
-                  materialtypeIDRecords.find((r) => r.id === value) ??
-                    selectedMaterialtypeIDRecords.find((r) => r.id === value)
-                )
-              : ""
-          );
-          setCurrentMaterialtypeIDValue(value);
-          const selectedRecord = materialtypeIDRecords.find(
-            (r) => r.id === value
-          );
-          if (selectedRecord) {
-            setSelectedMaterialtypeIDRecords([selectedRecord]);
-          }
-        }}
-        inputFieldRef={materialtypeIDRef}
-        defaultFieldValue={""}
-      >
-        <Autocomplete
-          label="Materialtype id"
-          isRequired={true}
-          isReadOnly={false}
-          placeholder="Search MaterialType"
-          value={currentMaterialtypeIDDisplayValue}
-          options={materialtypeIDRecords
-            .filter(
-              (r, i, arr) =>
-                arr.findIndex((member) => member?.id === r?.id) === i
-            )
-            .map((r) => ({
-              id: r?.id,
-              label: getDisplayValue.materialtypeID?.(r),
-            }))}
-          isLoading={materialtypeIDLoading}
-          onSelect={({ id, label }) => {
-            setCurrentMaterialtypeIDValue(id);
-            setCurrentMaterialtypeIDDisplayValue(label);
-            runValidationTasks("materialtypeID", label);
-          }}
-          onClear={() => {
-            setCurrentMaterialtypeIDDisplayValue("");
-          }}
-          onChange={(e) => {
-            let { value } = e.target;
-            fetchMaterialtypeIDRecords(value);
-            if (errors.materialtypeID?.hasError) {
-              runValidationTasks("materialtypeID", value);
-            }
-            setCurrentMaterialtypeIDDisplayValue(value);
-            setCurrentMaterialtypeIDValue(undefined);
+            setCurrentMaterialsDisplayValue(value);
+            setCurrentMaterialsValue(undefined);
           }}
           onBlur={() =>
-            runValidationTasks("materialtypeID", currentMaterialtypeIDValue)
+            runValidationTasks("Materials", currentMaterialsDisplayValue)
           }
-          errorMessage={errors.materialtypeID?.errorMessage}
-          hasError={errors.materialtypeID?.hasError}
-          ref={materialtypeIDRef}
+          errorMessage={errors.Materials?.errorMessage}
+          hasError={errors.Materials?.hasError}
+          ref={MaterialsRef}
           labelHidden={true}
-          {...getOverrideProps(overrides, "materialtypeID")}
+          {...getOverrideProps(overrides, "Materials")}
         ></Autocomplete>
       </ArrayField>
       <Flex

@@ -1,4 +1,28 @@
-type Sales @model @auth(rules: [{allow: public}]) {
+type MaterialType @model @auth(rules: [{allow: public}, {allow: owner}]) {
+  id: ID!
+  name: String
+  Materials: [Material] @hasMany(indexName: "byMaterialType", fields: ["id"])
+}
+
+type Company @model @auth(rules: [{allow: public}, {allow: owner}]) {
+  id: ID!
+  name: String
+  Customers: [Customer] @hasMany(indexName: "byCompany", fields: ["id"])
+}
+
+type Mall @model @auth(rules: [{allow: public}, {allow: owner}]) {
+  id: ID!
+  name: String
+  Employees: [Employee] @hasMany(indexName: "byMall", fields: ["id"])
+}
+
+type Position @model @auth(rules: [{allow: public}, {allow: owner}]) {
+  id: ID!
+  name: String
+  Employees: [Employee] @hasMany(indexName: "byPosition", fields: ["id"])
+}
+
+type Sales @model @auth(rules: [{allow: public}, {allow: owner}]) {
   id: ID!
   quantitySold: Int
   salesDate: AWSDate
@@ -8,31 +32,31 @@ type Sales @model @auth(rules: [{allow: public}]) {
   materialID: ID! @index(name: "byMaterial")
 }
 
-type Material @model @auth(rules: [{allow: public}]) {
+type Material @model @auth(rules: [{allow: public}, {allow: owner}]) {
   id: ID!
   name: String
   quantityAvailable: Int
   price: Float
-  type: String
   Sales: [Sales] @hasMany(indexName: "byMaterial", fields: ["id"])
+  materialtypeID: ID! @index(name: "byMaterialType")
 }
 
-type Customer @model @auth(rules: [{allow: public}]) {
+type Customer @model @auth(rules: [{allow: public}, {allow: owner}]) {
   id: ID!
   name: String
   phone: AWSPhone
   invoiceStatus: Boolean
   bulstat: String
-  companyName: String
   Sales: [Sales] @hasMany(indexName: "byCustomer", fields: ["id"])
+  companyID: ID! @index(name: "byCompany")
 }
 
-type Employee @model @auth(rules: [{allow: public}]) {
+type Employee @model @auth(rules: [{allow: public}, {allow: owner}]) {
   id: ID!
   name: String
   phone: AWSPhone
-  molAssigned: String
-  position: String
   Sales: [Sales] @hasMany(indexName: "byEmployee", fields: ["id"])
+  positionID: ID! @index(name: "byPosition")
+  mallID: ID! @index(name: "byMall")
 }
  

@@ -24,25 +24,28 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type EmployeeCreateFormInputValues = {
     name?: string;
     phone?: string;
-    molAssigned?: string;
-    position?: string;
     Sales?: any[];
+    positionID?: string;
+    mallID?: string;
+    position?: string;
 };
 export declare type EmployeeCreateFormValidationValues = {
     name?: ValidationFunction<string>;
     phone?: ValidationFunction<string>;
-    molAssigned?: ValidationFunction<string>;
-    position?: ValidationFunction<string>;
     Sales?: ValidationFunction<any>;
+    positionID?: ValidationFunction<string>;
+    mallID?: ValidationFunction<string>;
+    position?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type EmployeeCreateFormOverridesProps = {
     EmployeeCreateFormGrid?: PrimitiveOverrideProps<GridProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
     phone?: PrimitiveOverrideProps<TextFieldProps>;
-    molAssigned?: PrimitiveOverrideProps<TextFieldProps>;
-    position?: PrimitiveOverrideProps<SelectFieldProps>;
     Sales?: PrimitiveOverrideProps<AutocompleteProps>;
+    positionID?: PrimitiveOverrideProps<AutocompleteProps>;
+    mallID?: PrimitiveOverrideProps<AutocompleteProps>;
+    position?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type EmployeeCreateFormProps = React.PropsWithChildren<{
     overrides?: EmployeeCreateFormOverridesProps | undefined | null;

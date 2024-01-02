@@ -22,7 +22,7 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { listSales } from "../graphql/queries";
+import { listMalls, listPositions, listSales } from "../graphql/queries";
 import { createEmployee, updateSales } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
@@ -194,35 +194,56 @@ export default function EmployeeCreateForm(props) {
   const initialValues = {
     name: "",
     phone: "",
-    molAssigned: "",
-    position: "",
     Sales: [],
+    positionID: undefined,
+    mallID: undefined,
+    position: "",
   };
   const [name, setName] = React.useState(initialValues.name);
   const [phone, setPhone] = React.useState(initialValues.phone);
-  const [molAssigned, setMolAssigned] = React.useState(
-    initialValues.molAssigned
-  );
-  const [position, setPosition] = React.useState(initialValues.position);
   const [Sales, setSales] = React.useState(initialValues.Sales);
   const [SalesLoading, setSalesLoading] = React.useState(false);
   const [salesRecords, setSalesRecords] = React.useState([]);
+  const [positionID, setPositionID] = React.useState(initialValues.positionID);
+  const [positionIDLoading, setPositionIDLoading] = React.useState(false);
+  const [positionIDRecords, setPositionIDRecords] = React.useState([]);
+  const [selectedPositionIDRecords, setSelectedPositionIDRecords] =
+    React.useState([]);
+  const [mallID, setMallID] = React.useState(initialValues.mallID);
+  const [mallIDLoading, setMallIDLoading] = React.useState(false);
+  const [mallIDRecords, setMallIDRecords] = React.useState([]);
+  const [selectedMallIDRecords, setSelectedMallIDRecords] = React.useState([]);
+  const [position, setPosition] = React.useState(initialValues.position);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     setName(initialValues.name);
     setPhone(initialValues.phone);
-    setMolAssigned(initialValues.molAssigned);
-    setPosition(initialValues.position);
     setSales(initialValues.Sales);
     setCurrentSalesValue(undefined);
     setCurrentSalesDisplayValue("");
+    setPositionID(initialValues.positionID);
+    setCurrentPositionIDValue(undefined);
+    setCurrentPositionIDDisplayValue("");
+    setMallID(initialValues.mallID);
+    setCurrentMallIDValue(undefined);
+    setCurrentMallIDDisplayValue("");
+    setPosition(initialValues.position);
     setErrors({});
   };
   const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
     React.useState("");
   const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
   const SalesRef = React.createRef();
+  const [currentPositionIDDisplayValue, setCurrentPositionIDDisplayValue] =
+    React.useState("");
+  const [currentPositionIDValue, setCurrentPositionIDValue] =
+    React.useState(undefined);
+  const positionIDRef = React.createRef();
+  const [currentMallIDDisplayValue, setCurrentMallIDDisplayValue] =
+    React.useState("");
+  const [currentMallIDValue, setCurrentMallIDValue] = React.useState(undefined);
+  const mallIDRef = React.createRef();
   const getIDValue = {
     Sales: (r) => JSON.stringify({ id: r?.id }),
   };
@@ -233,13 +254,16 @@ export default function EmployeeCreateForm(props) {
   );
   const getDisplayValue = {
     Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
+    positionID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    mallID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
     name: [],
     phone: [{ type: "Phone" }],
-    molAssigned: [],
-    position: [],
     Sales: [],
+    positionID: [{ type: "Required" }],
+    mallID: [{ type: "Required" }],
+    position: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -290,8 +314,64 @@ export default function EmployeeCreateForm(props) {
     setSalesRecords(newOptions.slice(0, autocompleteLength));
     setSalesLoading(false);
   };
+  const fetchPositionIDRecords = async (value) => {
+    setPositionIDLoading(true);
+    const newOptions = [];
+    let newNext = "";
+    while (newOptions.length < autocompleteLength && newNext != null) {
+      const variables = {
+        limit: autocompleteLength * 5,
+        filter: {
+          or: [{ name: { contains: value } }, { id: { contains: value } }],
+        },
+      };
+      if (newNext) {
+        variables["nextToken"] = newNext;
+      }
+      const result = (
+        await client.graphql({
+          query: listPositions.replaceAll("__typename", ""),
+          variables,
+        })
+      )?.data?.listPositions?.items;
+      var loaded = result.filter((item) => positionID !== item.id);
+      newOptions.push(...loaded);
+      newNext = result.nextToken;
+    }
+    setPositionIDRecords(newOptions.slice(0, autocompleteLength));
+    setPositionIDLoading(false);
+  };
+  const fetchMallIDRecords = async (value) => {
+    setMallIDLoading(true);
+    const newOptions = [];
+    let newNext = "";
+    while (newOptions.length < autocompleteLength && newNext != null) {
+      const variables = {
+        limit: autocompleteLength * 5,
+        filter: {
+          or: [{ name: { contains: value } }, { id: { contains: value } }],
+        },
+      };
+      if (newNext) {
+        variables["nextToken"] = newNext;
+      }
+      const result = (
+        await client.graphql({
+          query: listMalls.replaceAll("__typename", ""),
+          variables,
+        })
+      )?.data?.listMalls?.items;
+      var loaded = result.filter((item) => mallID !== item.id);
+      newOptions.push(...loaded);
+      newNext = result.nextToken;
+    }
+    setMallIDRecords(newOptions.slice(0, autocompleteLength));
+    setMallIDLoading(false);
+  };
   React.useEffect(() => {
     fetchSalesRecords("");
+    fetchPositionIDRecords("");
+    fetchMallIDRecords("");
   }, []);
   return (
     <Grid
@@ -304,9 +384,10 @@ export default function EmployeeCreateForm(props) {
         let modelFields = {
           name,
           phone,
-          molAssigned,
-          position,
           Sales,
+          positionID,
+          mallID,
+          position,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -347,8 +428,8 @@ export default function EmployeeCreateForm(props) {
           const modelFieldsToSave = {
             name: modelFields.name,
             phone: modelFields.phone,
-            molAssigned: modelFields.molAssigned,
-            position: modelFields.position,
+            positionID: modelFields.positionID,
+            mallID: modelFields.mallID,
           };
           const employee = (
             await client.graphql({
@@ -405,9 +486,10 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name: value,
               phone,
-              molAssigned,
-              position,
               Sales,
+              positionID,
+              mallID,
+              position,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -434,9 +516,10 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name,
               phone: value,
-              molAssigned,
-              position,
               Sales,
+              positionID,
+              mallID,
+              position,
             };
             const result = onChange(modelFields);
             value = result?.phone ?? value;
@@ -451,62 +534,6 @@ export default function EmployeeCreateForm(props) {
         hasError={errors.phone?.hasError}
         {...getOverrideProps(overrides, "phone")}
       ></TextField>
-      <TextField
-        label="Mol assigned"
-        isRequired={false}
-        isReadOnly={false}
-        value={molAssigned}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              molAssigned: value,
-              position,
-              Sales,
-            };
-            const result = onChange(modelFields);
-            value = result?.molAssigned ?? value;
-          }
-          if (errors.molAssigned?.hasError) {
-            runValidationTasks("molAssigned", value);
-          }
-          setMolAssigned(value);
-        }}
-        onBlur={() => runValidationTasks("molAssigned", molAssigned)}
-        errorMessage={errors.molAssigned?.errorMessage}
-        hasError={errors.molAssigned?.hasError}
-        {...getOverrideProps(overrides, "molAssigned")}
-      ></TextField>
-      <SelectField
-        label="Position"
-        placeholder="Please select an option"
-        isDisabled={false}
-        value={position}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              molAssigned,
-              position: value,
-              Sales,
-            };
-            const result = onChange(modelFields);
-            value = result?.position ?? value;
-          }
-          if (errors.position?.hasError) {
-            runValidationTasks("position", value);
-          }
-          setPosition(value);
-        }}
-        onBlur={() => runValidationTasks("position", position)}
-        errorMessage={errors.position?.errorMessage}
-        hasError={errors.position?.hasError}
-        {...getOverrideProps(overrides, "position")}
-      ></SelectField>
       <ArrayField
         onChange={async (items) => {
           let values = items;
@@ -514,9 +541,10 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name,
               phone,
-              molAssigned,
-              position,
               Sales: values,
+              positionID,
+              mallID,
+              position,
             };
             const result = onChange(modelFields);
             values = result?.Sales ?? values;
@@ -587,6 +615,224 @@ export default function EmployeeCreateForm(props) {
           {...getOverrideProps(overrides, "Sales")}
         ></Autocomplete>
       </ArrayField>
+      <ArrayField
+        lengthLimit={1}
+        onChange={async (items) => {
+          let value = items[0];
+          if (onChange) {
+            const modelFields = {
+              name,
+              phone,
+              Sales,
+              positionID: value,
+              mallID,
+              position,
+            };
+            const result = onChange(modelFields);
+            value = result?.positionID ?? value;
+          }
+          setPositionID(value);
+          setCurrentPositionIDValue(undefined);
+        }}
+        currentFieldValue={currentPositionIDValue}
+        label={"Position id"}
+        items={positionID ? [positionID] : []}
+        hasError={errors?.positionID?.hasError}
+        runValidationTasks={async () =>
+          await runValidationTasks("positionID", currentPositionIDValue)
+        }
+        errorMessage={errors?.positionID?.errorMessage}
+        getBadgeText={(value) =>
+          value
+            ? getDisplayValue.positionID(
+                positionIDRecords.find((r) => r.id === value) ??
+                  selectedPositionIDRecords.find((r) => r.id === value)
+              )
+            : ""
+        }
+        setFieldValue={(value) => {
+          setCurrentPositionIDDisplayValue(
+            value
+              ? getDisplayValue.positionID(
+                  positionIDRecords.find((r) => r.id === value) ??
+                    selectedPositionIDRecords.find((r) => r.id === value)
+                )
+              : ""
+          );
+          setCurrentPositionIDValue(value);
+          const selectedRecord = positionIDRecords.find((r) => r.id === value);
+          if (selectedRecord) {
+            setSelectedPositionIDRecords([selectedRecord]);
+          }
+        }}
+        inputFieldRef={positionIDRef}
+        defaultFieldValue={""}
+      >
+        <Autocomplete
+          label="Position id"
+          isRequired={true}
+          isReadOnly={false}
+          placeholder="Search Position"
+          value={currentPositionIDDisplayValue}
+          options={positionIDRecords
+            .filter(
+              (r, i, arr) =>
+                arr.findIndex((member) => member?.id === r?.id) === i
+            )
+            .map((r) => ({
+              id: r?.id,
+              label: getDisplayValue.positionID?.(r),
+            }))}
+          isLoading={positionIDLoading}
+          onSelect={({ id, label }) => {
+            setCurrentPositionIDValue(id);
+            setCurrentPositionIDDisplayValue(label);
+            runValidationTasks("positionID", label);
+          }}
+          onClear={() => {
+            setCurrentPositionIDDisplayValue("");
+          }}
+          onChange={(e) => {
+            let { value } = e.target;
+            fetchPositionIDRecords(value);
+            if (errors.positionID?.hasError) {
+              runValidationTasks("positionID", value);
+            }
+            setCurrentPositionIDDisplayValue(value);
+            setCurrentPositionIDValue(undefined);
+          }}
+          onBlur={() =>
+            runValidationTasks("positionID", currentPositionIDValue)
+          }
+          errorMessage={errors.positionID?.errorMessage}
+          hasError={errors.positionID?.hasError}
+          ref={positionIDRef}
+          labelHidden={true}
+          {...getOverrideProps(overrides, "positionID")}
+        ></Autocomplete>
+      </ArrayField>
+      <ArrayField
+        lengthLimit={1}
+        onChange={async (items) => {
+          let value = items[0];
+          if (onChange) {
+            const modelFields = {
+              name,
+              phone,
+              Sales,
+              positionID,
+              mallID: value,
+              position,
+            };
+            const result = onChange(modelFields);
+            value = result?.mallID ?? value;
+          }
+          setMallID(value);
+          setCurrentMallIDValue(undefined);
+        }}
+        currentFieldValue={currentMallIDValue}
+        label={"Mall id"}
+        items={mallID ? [mallID] : []}
+        hasError={errors?.mallID?.hasError}
+        runValidationTasks={async () =>
+          await runValidationTasks("mallID", currentMallIDValue)
+        }
+        errorMessage={errors?.mallID?.errorMessage}
+        getBadgeText={(value) =>
+          value
+            ? getDisplayValue.mallID(
+                mallIDRecords.find((r) => r.id === value) ??
+                  selectedMallIDRecords.find((r) => r.id === value)
+              )
+            : ""
+        }
+        setFieldValue={(value) => {
+          setCurrentMallIDDisplayValue(
+            value
+              ? getDisplayValue.mallID(
+                  mallIDRecords.find((r) => r.id === value) ??
+                    selectedMallIDRecords.find((r) => r.id === value)
+                )
+              : ""
+          );
+          setCurrentMallIDValue(value);
+          const selectedRecord = mallIDRecords.find((r) => r.id === value);
+          if (selectedRecord) {
+            setSelectedMallIDRecords([selectedRecord]);
+          }
+        }}
+        inputFieldRef={mallIDRef}
+        defaultFieldValue={""}
+      >
+        <Autocomplete
+          label="Mall id"
+          isRequired={true}
+          isReadOnly={false}
+          placeholder="Search Mall"
+          value={currentMallIDDisplayValue}
+          options={mallIDRecords
+            .filter(
+              (r, i, arr) =>
+                arr.findIndex((member) => member?.id === r?.id) === i
+            )
+            .map((r) => ({
+              id: r?.id,
+              label: getDisplayValue.mallID?.(r),
+            }))}
+          isLoading={mallIDLoading}
+          onSelect={({ id, label }) => {
+            setCurrentMallIDValue(id);
+            setCurrentMallIDDisplayValue(label);
+            runValidationTasks("mallID", label);
+          }}
+          onClear={() => {
+            setCurrentMallIDDisplayValue("");
+          }}
+          onChange={(e) => {
+            let { value } = e.target;
+            fetchMallIDRecords(value);
+            if (errors.mallID?.hasError) {
+              runValidationTasks("mallID", value);
+            }
+            setCurrentMallIDDisplayValue(value);
+            setCurrentMallIDValue(undefined);
+          }}
+          onBlur={() => runValidationTasks("mallID", currentMallIDValue)}
+          errorMessage={errors.mallID?.errorMessage}
+          hasError={errors.mallID?.hasError}
+          ref={mallIDRef}
+          labelHidden={true}
+          {...getOverrideProps(overrides, "mallID")}
+        ></Autocomplete>
+      </ArrayField>
+      <SelectField
+        label="Label"
+        placeholder="Please select an option"
+        value={position}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              name,
+              phone,
+              Sales,
+              positionID,
+              mallID,
+              position: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.position ?? value;
+          }
+          if (errors.position?.hasError) {
+            runValidationTasks("position", value);
+          }
+          setPosition(value);
+        }}
+        onBlur={() => runValidationTasks("position", position)}
+        errorMessage={errors.position?.errorMessage}
+        hasError={errors.position?.hasError}
+        {...getOverrideProps(overrides, "position")}
+      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}

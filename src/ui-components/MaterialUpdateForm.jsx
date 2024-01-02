@@ -21,7 +21,12 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { getMaterial, listSales } from "../graphql/queries";
+import {
+  getMaterial,
+  getMaterialType,
+  listMaterialTypes,
+  listSales,
+} from "../graphql/queries";
 import { updateMaterial, updateSales } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
@@ -195,31 +200,45 @@ export default function MaterialUpdateForm(props) {
     name: "",
     quantityAvailable: "",
     price: "",
-    type: "",
     Sales: [],
+    materialtypeID: undefined,
   };
   const [name, setName] = React.useState(initialValues.name);
   const [quantityAvailable, setQuantityAvailable] = React.useState(
     initialValues.quantityAvailable
   );
   const [price, setPrice] = React.useState(initialValues.price);
-  const [type, setType] = React.useState(initialValues.type);
   const [Sales, setSales] = React.useState(initialValues.Sales);
   const [SalesLoading, setSalesLoading] = React.useState(false);
   const [salesRecords, setSalesRecords] = React.useState([]);
+  const [materialtypeID, setMaterialtypeID] = React.useState(
+    initialValues.materialtypeID
+  );
+  const [materialtypeIDLoading, setMaterialtypeIDLoading] =
+    React.useState(false);
+  const [materialtypeIDRecords, setMaterialtypeIDRecords] = React.useState([]);
+  const [selectedMaterialtypeIDRecords, setSelectedMaterialtypeIDRecords] =
+    React.useState([]);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = materialRecord
-      ? { ...initialValues, ...materialRecord, Sales: linkedSales }
+      ? {
+          ...initialValues,
+          ...materialRecord,
+          Sales: linkedSales,
+          materialtypeID,
+        }
       : initialValues;
     setName(cleanValues.name);
     setQuantityAvailable(cleanValues.quantityAvailable);
     setPrice(cleanValues.price);
-    setType(cleanValues.type);
     setSales(cleanValues.Sales ?? []);
     setCurrentSalesValue(undefined);
     setCurrentSalesDisplayValue("");
+    setMaterialtypeID(cleanValues.materialtypeID);
+    setCurrentMaterialtypeIDValue(undefined);
+    setCurrentMaterialtypeIDDisplayValue("");
     setErrors({});
   };
   const [materialRecord, setMaterialRecord] = React.useState(materialModelProp);
@@ -237,15 +256,37 @@ export default function MaterialUpdateForm(props) {
         : materialModelProp;
       const linkedSales = record?.Sales?.items ?? [];
       setLinkedSales(linkedSales);
+      const materialtypeIDRecord = record ? record.materialtypeID : undefined;
+      const materialTypeRecord = materialtypeIDRecord
+        ? (
+            await client.graphql({
+              query: getMaterialType.replaceAll("__typename", ""),
+              variables: { id: materialtypeIDRecord },
+            })
+          )?.data?.getMaterialType
+        : undefined;
+      setMaterialtypeID(materialtypeIDRecord);
+      setSelectedMaterialtypeIDRecords([materialTypeRecord]);
       setMaterialRecord(record);
     };
     queryData();
   }, [idProp, materialModelProp]);
-  React.useEffect(resetStateValues, [materialRecord, linkedSales]);
+  React.useEffect(resetStateValues, [
+    materialRecord,
+    linkedSales,
+    materialtypeID,
+  ]);
   const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
     React.useState("");
   const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
   const SalesRef = React.createRef();
+  const [
+    currentMaterialtypeIDDisplayValue,
+    setCurrentMaterialtypeIDDisplayValue,
+  ] = React.useState("");
+  const [currentMaterialtypeIDValue, setCurrentMaterialtypeIDValue] =
+    React.useState(undefined);
+  const materialtypeIDRef = React.createRef();
   const getIDValue = {
     Sales: (r) => JSON.stringify({ id: r?.id }),
   };
@@ -256,13 +297,14 @@ export default function MaterialUpdateForm(props) {
   );
   const getDisplayValue = {
     Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
+    materialtypeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
     name: [],
     quantityAvailable: [],
     price: [],
-    type: [],
     Sales: [],
+    materialtypeID: [{ type: "Required" }],
   };
   const runValidationTasks = async (
     fieldName,
@@ -313,8 +355,36 @@ export default function MaterialUpdateForm(props) {
     setSalesRecords(newOptions.slice(0, autocompleteLength));
     setSalesLoading(false);
   };
+  const fetchMaterialtypeIDRecords = async (value) => {
+    setMaterialtypeIDLoading(true);
+    const newOptions = [];
+    let newNext = "";
+    while (newOptions.length < autocompleteLength && newNext != null) {
+      const variables = {
+        limit: autocompleteLength * 5,
+        filter: {
+          or: [{ name: { contains: value } }, { id: { contains: value } }],
+        },
+      };
+      if (newNext) {
+        variables["nextToken"] = newNext;
+      }
+      const result = (
+        await client.graphql({
+          query: listMaterialTypes.replaceAll("__typename", ""),
+          variables,
+        })
+      )?.data?.listMaterialTypes?.items;
+      var loaded = result.filter((item) => materialtypeID !== item.id);
+      newOptions.push(...loaded);
+      newNext = result.nextToken;
+    }
+    setMaterialtypeIDRecords(newOptions.slice(0, autocompleteLength));
+    setMaterialtypeIDLoading(false);
+  };
   React.useEffect(() => {
     fetchSalesRecords("");
+    fetchMaterialtypeIDRecords("");
   }, []);
   return (
     <Grid
@@ -328,8 +398,8 @@ export default function MaterialUpdateForm(props) {
           name: name ?? null,
           quantityAvailable: quantityAvailable ?? null,
           price: price ?? null,
-          type: type ?? null,
           Sales: Sales ?? null,
+          materialtypeID,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -419,7 +489,7 @@ export default function MaterialUpdateForm(props) {
             name: modelFields.name ?? null,
             quantityAvailable: modelFields.quantityAvailable ?? null,
             price: modelFields.price ?? null,
-            type: modelFields.type ?? null,
+            materialtypeID: modelFields.materialtypeID,
           };
           promises.push(
             client.graphql({
@@ -458,8 +528,8 @@ export default function MaterialUpdateForm(props) {
               name: value,
               quantityAvailable,
               price,
-              type,
               Sales,
+              materialtypeID,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -490,8 +560,8 @@ export default function MaterialUpdateForm(props) {
               name,
               quantityAvailable: value,
               price,
-              type,
               Sales,
+              materialtypeID,
             };
             const result = onChange(modelFields);
             value = result?.quantityAvailable ?? value;
@@ -524,8 +594,8 @@ export default function MaterialUpdateForm(props) {
               name,
               quantityAvailable,
               price: value,
-              type,
               Sales,
+              materialtypeID,
             };
             const result = onChange(modelFields);
             value = result?.price ?? value;
@@ -540,34 +610,6 @@ export default function MaterialUpdateForm(props) {
         hasError={errors.price?.hasError}
         {...getOverrideProps(overrides, "price")}
       ></TextField>
-      <TextField
-        label="Type"
-        isRequired={false}
-        isReadOnly={false}
-        value={type}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              name,
-              quantityAvailable,
-              price,
-              type: value,
-              Sales,
-            };
-            const result = onChange(modelFields);
-            value = result?.type ?? value;
-          }
-          if (errors.type?.hasError) {
-            runValidationTasks("type", value);
-          }
-          setType(value);
-        }}
-        onBlur={() => runValidationTasks("type", type)}
-        errorMessage={errors.type?.errorMessage}
-        hasError={errors.type?.hasError}
-        {...getOverrideProps(overrides, "type")}
-      ></TextField>
       <ArrayField
         onChange={async (items) => {
           let values = items;
@@ -576,8 +618,8 @@ export default function MaterialUpdateForm(props) {
               name,
               quantityAvailable,
               price,
-              type,
               Sales: values,
+              materialtypeID,
             };
             const result = onChange(modelFields);
             values = result?.Sales ?? values;
@@ -646,6 +688,104 @@ export default function MaterialUpdateForm(props) {
           ref={SalesRef}
           labelHidden={true}
           {...getOverrideProps(overrides, "Sales")}
+        ></Autocomplete>
+      </ArrayField>
+      <ArrayField
+        lengthLimit={1}
+        onChange={async (items) => {
+          let value = items[0];
+          if (onChange) {
+            const modelFields = {
+              name,
+              quantityAvailable,
+              price,
+              Sales,
+              materialtypeID: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.materialtypeID ?? value;
+          }
+          setMaterialtypeID(value);
+          setCurrentMaterialtypeIDValue(undefined);
+        }}
+        currentFieldValue={currentMaterialtypeIDValue}
+        label={"Materialtype id"}
+        items={materialtypeID ? [materialtypeID] : []}
+        hasError={errors?.materialtypeID?.hasError}
+        runValidationTasks={async () =>
+          await runValidationTasks("materialtypeID", currentMaterialtypeIDValue)
+        }
+        errorMessage={errors?.materialtypeID?.errorMessage}
+        getBadgeText={(value) =>
+          value
+            ? getDisplayValue.materialtypeID(
+                materialtypeIDRecords.find((r) => r.id === value) ??
+                  selectedMaterialtypeIDRecords.find((r) => r.id === value)
+              )
+            : ""
+        }
+        setFieldValue={(value) => {
+          setCurrentMaterialtypeIDDisplayValue(
+            value
+              ? getDisplayValue.materialtypeID(
+                  materialtypeIDRecords.find((r) => r.id === value) ??
+                    selectedMaterialtypeIDRecords.find((r) => r.id === value)
+                )
+              : ""
+          );
+          setCurrentMaterialtypeIDValue(value);
+          const selectedRecord = materialtypeIDRecords.find(
+            (r) => r.id === value
+          );
+          if (selectedRecord) {
+            setSelectedMaterialtypeIDRecords([selectedRecord]);
+          }
+        }}
+        inputFieldRef={materialtypeIDRef}
+        defaultFieldValue={""}
+      >
+        <Autocomplete
+          label="Materialtype id"
+          isRequired={true}
+          isReadOnly={false}
+          placeholder="Search MaterialType"
+          value={currentMaterialtypeIDDisplayValue}
+          options={materialtypeIDRecords
+            .filter(
+              (r, i, arr) =>
+                arr.findIndex((member) => member?.id === r?.id) === i
+            )
+            .map((r) => ({
+              id: r?.id,
+              label: getDisplayValue.materialtypeID?.(r),
+            }))}
+          isLoading={materialtypeIDLoading}
+          onSelect={({ id, label }) => {
+            setCurrentMaterialtypeIDValue(id);
+            setCurrentMaterialtypeIDDisplayValue(label);
+            runValidationTasks("materialtypeID", label);
+          }}
+          onClear={() => {
+            setCurrentMaterialtypeIDDisplayValue("");
+          }}
+          defaultValue={materialtypeID}
+          onChange={(e) => {
+            let { value } = e.target;
+            fetchMaterialtypeIDRecords(value);
+            if (errors.materialtypeID?.hasError) {
+              runValidationTasks("materialtypeID", value);
+            }
+            setCurrentMaterialtypeIDDisplayValue(value);
+            setCurrentMaterialtypeIDValue(undefined);
+          }}
+          onBlur={() =>
+            runValidationTasks("materialtypeID", currentMaterialtypeIDValue)
+          }
+          errorMessage={errors.materialtypeID?.errorMessage}
+          hasError={errors.materialtypeID?.hasError}
+          ref={materialtypeIDRef}
+          labelHidden={true}
+          {...getOverrideProps(overrides, "materialtypeID")}
         ></Autocomplete>
       </ArrayField>
       <Flex

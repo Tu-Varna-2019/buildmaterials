@@ -4,37 +4,43 @@ import { DataModelContext } from "../../contexts/data_models/context";
 
 export function FuncHomeOverride() {
   const {
-    selectFieldBookARoomOptions,
+    selectFieldCreateUpdateOptions,
     handleSelectFieldUpdateOptions,
     selectFieldInquery,
     handleSelectFieldInqueryOptions,
-    selectFieldCreate,
     handleSelectFieldCreateOptions,
     handleLogOutClick,
   } = HomeComponent();
 
-  const { ClientObject } = React.useContext(DataModelContext);
+  const { EmployeeObject } = React.useContext(DataModelContext);
 
   const homeOverride = {
-    text_Username: {
-      children: ClientObject.name,
-    },
-    select_field_update: {
-      onChange: (event) => handleSelectFieldUpdateOptions(event),
-      style: { backgroundColor: "transparent", color: "transparent" },
-      options: selectFieldBookARoomOptions,
-    },
-    select_field_inquery: {
-      onChange: (event) => handleSelectFieldInqueryOptions(event),
-      style: { backgroundColor: "transparent", color: "transparent" },
-      options: selectFieldInquery,
+    text_name: {
+      children: EmployeeObject.name,
     },
     select_field_create: {
       onChange: (event) => handleSelectFieldCreateOptions(event),
       style: { backgroundColor: "transparent", color: "transparent" },
-      options: selectFieldCreate,
+      options: selectFieldCreateUpdateOptions,
     },
+    select_field_update: {
+      onChange: (event) => handleSelectFieldUpdateOptions(event),
+      style: { backgroundColor: "transparent", color: "transparent" },
+      options: selectFieldCreateUpdateOptions,
+    },
+    select_field_query: {
+      onChange: (event) => handleSelectFieldInqueryOptions(event),
+      style: { backgroundColor: "transparent", color: "transparent" },
+      options: selectFieldInquery,
+    },
+    select_field_report: {
+      onChange: (event) => handleSelectFieldInqueryOptions(event),
+      style: { backgroundColor: "transparent", color: "transparent" },
+      options: selectFieldInquery,
+    },
+
     button_logout: {
+      variation: "link",
       onClick: (event) => handleLogOutClick(event),
     },
   };

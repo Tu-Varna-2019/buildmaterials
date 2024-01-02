@@ -2,5 +2,11 @@
   "AppSyncApiName": "tuvarnauisbuild",
   "DynamoDBBillingMode": "PAY_PER_REQUEST",
   "DynamoDBEnableServerSideEncryption": false,
-  "AuthModeLastUpdated": "2023-11-28T08:12:34.792Z"
+  "AuthModeLastUpdated": "2024-01-02T19:10:38.654Z",
+  "AuthCognitoUserPoolId": {
+    "Fn::GetAtt": [
+      "authTuVarnaUISBuild",
+      "Outputs.UserPoolId"
+    ]
+  }
 }

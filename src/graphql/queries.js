@@ -1,6 +1,199 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
+export const getMaterialType = /* GraphQL */ `
+  query GetMaterialType($id: ID!) {
+    getMaterialType(id: $id) {
+      id
+      name
+      Materials {
+        items {
+          id
+          name
+          quantityAvailable
+          price
+          materialtypeID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const listMaterialTypes = /* GraphQL */ `
+  query ListMaterialTypes(
+    $filter: ModelMaterialTypeFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listMaterialTypes(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        Materials {
+          nextToken
+          __typename
+        }
+        createdAt
+        updatedAt
+        __typename
+      }
+      nextToken
+      __typename
+    }
+  }
+`;
+export const getCompany = /* GraphQL */ `
+  query GetCompany($id: ID!) {
+    getCompany(id: $id) {
+      id
+      name
+      Customers {
+        items {
+          id
+          name
+          phone
+          invoiceStatus
+          bulstat
+          companyID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const listCompanies = /* GraphQL */ `
+  query ListCompanies(
+    $filter: ModelCompanyFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listCompanies(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        Customers {
+          nextToken
+          __typename
+        }
+        createdAt
+        updatedAt
+        __typename
+      }
+      nextToken
+      __typename
+    }
+  }
+`;
+export const getMall = /* GraphQL */ `
+  query GetMall($id: ID!) {
+    getMall(id: $id) {
+      id
+      name
+      Employees {
+        items {
+          id
+          name
+          phone
+          positionID
+          mallID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const listMalls = /* GraphQL */ `
+  query ListMalls(
+    $filter: ModelMallFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listMalls(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        Employees {
+          nextToken
+          __typename
+        }
+        createdAt
+        updatedAt
+        __typename
+      }
+      nextToken
+      __typename
+    }
+  }
+`;
+export const getPosition = /* GraphQL */ `
+  query GetPosition($id: ID!) {
+    getPosition(id: $id) {
+      id
+      name
+      Employees {
+        items {
+          id
+          name
+          phone
+          positionID
+          mallID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const listPositions = /* GraphQL */ `
+  query ListPositions(
+    $filter: ModelPositionFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listPositions(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        Employees {
+          nextToken
+          __typename
+        }
+        createdAt
+        updatedAt
+        __typename
+      }
+      nextToken
+      __typename
+    }
+  }
+`;
 export const getSales = /* GraphQL */ `
   query GetSales($id: ID!) {
     getSales(id: $id) {
@@ -8,6 +201,9 @@ export const getSales = /* GraphQL */ `
       quantitySold
       salesDate
       totalPrice
+      employeeID
+      customerID
+      materialID
       createdAt
       updatedAt
       __typename
@@ -26,6 +222,9 @@ export const listSales = /* GraphQL */ `
         quantitySold
         salesDate
         totalPrice
+        employeeID
+        customerID
+        materialID
         createdAt
         updatedAt
         __typename
@@ -42,7 +241,23 @@ export const getMaterial = /* GraphQL */ `
       name
       quantityAvailable
       price
-      type
+      Sales {
+        items {
+          id
+          quantitySold
+          salesDate
+          totalPrice
+          employeeID
+          customerID
+          materialID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      materialtypeID
       createdAt
       updatedAt
       __typename
@@ -61,7 +276,11 @@ export const listMaterials = /* GraphQL */ `
         name
         quantityAvailable
         price
-        type
+        Sales {
+          nextToken
+          __typename
+        }
+        materialtypeID
         createdAt
         updatedAt
         __typename
@@ -79,7 +298,23 @@ export const getCustomer = /* GraphQL */ `
       phone
       invoiceStatus
       bulstat
-      companyName
+      Sales {
+        items {
+          id
+          quantitySold
+          salesDate
+          totalPrice
+          employeeID
+          customerID
+          materialID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      companyID
       createdAt
       updatedAt
       __typename
@@ -99,7 +334,11 @@ export const listCustomers = /* GraphQL */ `
         phone
         invoiceStatus
         bulstat
-        companyName
+        Sales {
+          nextToken
+          __typename
+        }
+        companyID
         createdAt
         updatedAt
         __typename
@@ -115,8 +354,24 @@ export const getEmployee = /* GraphQL */ `
       id
       name
       phone
-      molAssigned
-      position
+      Sales {
+        items {
+          id
+          quantitySold
+          salesDate
+          totalPrice
+          employeeID
+          customerID
+          materialID
+          createdAt
+          updatedAt
+          __typename
+        }
+        nextToken
+        __typename
+      }
+      positionID
+      mallID
       createdAt
       updatedAt
       __typename
@@ -134,8 +389,12 @@ export const listEmployees = /* GraphQL */ `
         id
         name
         phone
-        molAssigned
-        position
+        Sales {
+          nextToken
+          __typename
+        }
+        positionID
+        mallID
         createdAt
         updatedAt
         __typename

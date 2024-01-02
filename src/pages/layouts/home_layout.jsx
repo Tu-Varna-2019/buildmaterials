@@ -6,6 +6,10 @@ import {
 } from "../../contexts/data_models/context";
 import React from "react";
 import { AlertBoxHome } from "../../classes/components/alertBoxHome";
+import FigHome from "../../ui-components/FigHome";
+import FigBlank from "../../ui-components/FigBlank";
+import { MaterialCreateForm } from "../../ui-components";
+import { FuncOutputTableOverride } from "../overrides/output_table_override";
 //import { OutputTableHome } from "../../classes/components/outputTableHome";
 //import { OutputTableTurnOver } from "../../classes/components/outputTableTurnOver";
 
@@ -23,21 +27,31 @@ export default function HomeLayout() {
   // const { updateRoomOverride } = FuncUpdateRoomOverride();
   // const { updateRegistrationOOverride } = FuncUpdateRegistrationOverride();
 
-  // // Output table
-  // const { outputTableOverride } = FuncOutputTableOverride();
+  // Output table
+  const { outputTableOverride } = FuncOutputTableOverride();
 
   const { UtilsObject } = React.useContext(HelpersContext);
 
   return (
     <View position="relative" display="inline-block">
       {UtilsObject.showAlertBox && <AlertBoxHome />}
-      {/* <FigHome overrides={homeOverride} /> */}
-      {ComponentStateObject.showCreateRoomPage && (
+      <FigHome overrides={homeOverride} />
+      {ComponentStateObject.showCreateMaterialPage && (
         <View position="absolute" display="block" top="0">
-          {/* <FigCreateRoom overrides={createRoomOverride} />*/}
+          <FigBlank overrides={outputTableOverride} />
+
+          <View
+            position="absolute"
+            display="block"
+            top="0"
+            justifyContent="center"
+            right="700px"
+          >
+            <MaterialCreateForm />
+          </View>
         </View>
       )}
-      {ComponentStateObject.showCreateRegistrationPage && (
+      {ComponentStateObject.showCreateMaterialTypePage && (
         <View position="absolute" display="block" top="0">
           {/* <FigCreateRegistration overrides={createRegistrationOverride}> */}
         </View>

@@ -22,7 +22,12 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { getCustomer, listSales } from "../graphql/queries";
+import {
+  getCompany,
+  getCustomer,
+  listCompanies,
+  listSales,
+} from "../graphql/queries";
 import { updateCustomer, updateSales } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
@@ -197,8 +202,8 @@ export default function CustomerUpdateForm(props) {
     phone: "",
     invoiceStatus: false,
     bulstat: "",
-    companyName: "",
     Sales: [],
+    companyID: undefined,
   };
   const [name, setName] = React.useState(initialValues.name);
   const [phone, setPhone] = React.useState(initialValues.phone);
@@ -206,26 +211,30 @@ export default function CustomerUpdateForm(props) {
     initialValues.invoiceStatus
   );
   const [bulstat, setBulstat] = React.useState(initialValues.bulstat);
-  const [companyName, setCompanyName] = React.useState(
-    initialValues.companyName
-  );
   const [Sales, setSales] = React.useState(initialValues.Sales);
   const [SalesLoading, setSalesLoading] = React.useState(false);
   const [salesRecords, setSalesRecords] = React.useState([]);
+  const [companyID, setCompanyID] = React.useState(initialValues.companyID);
+  const [companyIDLoading, setCompanyIDLoading] = React.useState(false);
+  const [companyIDRecords, setCompanyIDRecords] = React.useState([]);
+  const [selectedCompanyIDRecords, setSelectedCompanyIDRecords] =
+    React.useState([]);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = customerRecord
-      ? { ...initialValues, ...customerRecord, Sales: linkedSales }
+      ? { ...initialValues, ...customerRecord, Sales: linkedSales, companyID }
       : initialValues;
     setName(cleanValues.name);
     setPhone(cleanValues.phone);
     setInvoiceStatus(cleanValues.invoiceStatus);
     setBulstat(cleanValues.bulstat);
-    setCompanyName(cleanValues.companyName);
     setSales(cleanValues.Sales ?? []);
     setCurrentSalesValue(undefined);
     setCurrentSalesDisplayValue("");
+    setCompanyID(cleanValues.companyID);
+    setCurrentCompanyIDValue(undefined);
+    setCurrentCompanyIDDisplayValue("");
     setErrors({});
   };
   const [customerRecord, setCustomerRecord] = React.useState(customerModelProp);
@@ -243,15 +252,31 @@ export default function CustomerUpdateForm(props) {
         : customerModelProp;
       const linkedSales = record?.Sales?.items ?? [];
       setLinkedSales(linkedSales);
+      const companyIDRecord = record ? record.companyID : undefined;
+      const companyRecord = companyIDRecord
+        ? (
+            await client.graphql({
+              query: getCompany.replaceAll("__typename", ""),
+              variables: { id: companyIDRecord },
+            })
+          )?.data?.getCompany
+        : undefined;
+      setCompanyID(companyIDRecord);
+      setSelectedCompanyIDRecords([companyRecord]);
       setCustomerRecord(record);
     };
     queryData();
   }, [idProp, customerModelProp]);
-  React.useEffect(resetStateValues, [customerRecord, linkedSales]);
+  React.useEffect(resetStateValues, [customerRecord, linkedSales, companyID]);
   const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
     React.useState("");
   const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
   const SalesRef = React.createRef();
+  const [currentCompanyIDDisplayValue, setCurrentCompanyIDDisplayValue] =
+    React.useState("");
+  const [currentCompanyIDValue, setCurrentCompanyIDValue] =
+    React.useState(undefined);
+  const companyIDRef = React.createRef();
   const getIDValue = {
     Sales: (r) => JSON.stringify({ id: r?.id }),
   };
@@ -262,14 +287,15 @@ export default function CustomerUpdateForm(props) {
   );
   const getDisplayValue = {
     Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
+    companyID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
     name: [],
     phone: [{ type: "Phone" }],
     invoiceStatus: [],
     bulstat: [],
-    companyName: [],
     Sales: [],
+    companyID: [{ type: "Required" }],
   };
   const runValidationTasks = async (
     fieldName,
@@ -320,8 +346,36 @@ export default function CustomerUpdateForm(props) {
     setSalesRecords(newOptions.slice(0, autocompleteLength));
     setSalesLoading(false);
   };
+  const fetchCompanyIDRecords = async (value) => {
+    setCompanyIDLoading(true);
+    const newOptions = [];
+    let newNext = "";
+    while (newOptions.length < autocompleteLength && newNext != null) {
+      const variables = {
+        limit: autocompleteLength * 5,
+        filter: {
+          or: [{ name: { contains: value } }, { id: { contains: value } }],
+        },
+      };
+      if (newNext) {
+        variables["nextToken"] = newNext;
+      }
+      const result = (
+        await client.graphql({
+          query: listCompanies.replaceAll("__typename", ""),
+          variables,
+        })
+      )?.data?.listCompanies?.items;
+      var loaded = result.filter((item) => companyID !== item.id);
+      newOptions.push(...loaded);
+      newNext = result.nextToken;
+    }
+    setCompanyIDRecords(newOptions.slice(0, autocompleteLength));
+    setCompanyIDLoading(false);
+  };
   React.useEffect(() => {
     fetchSalesRecords("");
+    fetchCompanyIDRecords("");
   }, []);
   return (
     <Grid
@@ -336,8 +390,8 @@ export default function CustomerUpdateForm(props) {
           phone: phone ?? null,
           invoiceStatus: invoiceStatus ?? null,
           bulstat: bulstat ?? null,
-          companyName: companyName ?? null,
           Sales: Sales ?? null,
+          companyID,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -428,7 +482,7 @@ export default function CustomerUpdateForm(props) {
             phone: modelFields.phone ?? null,
             invoiceStatus: modelFields.invoiceStatus ?? null,
             bulstat: modelFields.bulstat ?? null,
-            companyName: modelFields.companyName ?? null,
+            companyID: modelFields.companyID,
           };
           promises.push(
             client.graphql({
@@ -468,8 +522,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus,
               bulstat,
-              companyName,
               Sales,
+              companyID,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -498,8 +552,8 @@ export default function CustomerUpdateForm(props) {
               phone: value,
               invoiceStatus,
               bulstat,
-              companyName,
               Sales,
+              companyID,
             };
             const result = onChange(modelFields);
             value = result?.phone ?? value;
@@ -527,8 +581,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus: value,
               bulstat,
-              companyName,
               Sales,
+              companyID,
             };
             const result = onChange(modelFields);
             value = result?.invoiceStatus ?? value;
@@ -556,8 +610,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus,
               bulstat: value,
-              companyName,
               Sales,
+              companyID,
             };
             const result = onChange(modelFields);
             value = result?.bulstat ?? value;
@@ -572,35 +626,6 @@ export default function CustomerUpdateForm(props) {
         hasError={errors.bulstat?.hasError}
         {...getOverrideProps(overrides, "bulstat")}
       ></TextField>
-      <TextField
-        label="Company name"
-        isRequired={false}
-        isReadOnly={false}
-        value={companyName}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              invoiceStatus,
-              bulstat,
-              companyName: value,
-              Sales,
-            };
-            const result = onChange(modelFields);
-            value = result?.companyName ?? value;
-          }
-          if (errors.companyName?.hasError) {
-            runValidationTasks("companyName", value);
-          }
-          setCompanyName(value);
-        }}
-        onBlur={() => runValidationTasks("companyName", companyName)}
-        errorMessage={errors.companyName?.errorMessage}
-        hasError={errors.companyName?.hasError}
-        {...getOverrideProps(overrides, "companyName")}
-      ></TextField>
       <ArrayField
         onChange={async (items) => {
           let values = items;
@@ -610,8 +635,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus,
               bulstat,
-              companyName,
               Sales: values,
+              companyID,
             };
             const result = onChange(modelFields);
             values = result?.Sales ?? values;
@@ -680,6 +705,101 @@ export default function CustomerUpdateForm(props) {
           ref={SalesRef}
           labelHidden={true}
           {...getOverrideProps(overrides, "Sales")}
+        ></Autocomplete>
+      </ArrayField>
+      <ArrayField
+        lengthLimit={1}
+        onChange={async (items) => {
+          let value = items[0];
+          if (onChange) {
+            const modelFields = {
+              name,
+              phone,
+              invoiceStatus,
+              bulstat,
+              Sales,
+              companyID: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.companyID ?? value;
+          }
+          setCompanyID(value);
+          setCurrentCompanyIDValue(undefined);
+        }}
+        currentFieldValue={currentCompanyIDValue}
+        label={"Company id"}
+        items={companyID ? [companyID] : []}
+        hasError={errors?.companyID?.hasError}
+        runValidationTasks={async () =>
+          await runValidationTasks("companyID", currentCompanyIDValue)
+        }
+        errorMessage={errors?.companyID?.errorMessage}
+        getBadgeText={(value) =>
+          value
+            ? getDisplayValue.companyID(
+                companyIDRecords.find((r) => r.id === value) ??
+                  selectedCompanyIDRecords.find((r) => r.id === value)
+              )
+            : ""
+        }
+        setFieldValue={(value) => {
+          setCurrentCompanyIDDisplayValue(
+            value
+              ? getDisplayValue.companyID(
+                  companyIDRecords.find((r) => r.id === value) ??
+                    selectedCompanyIDRecords.find((r) => r.id === value)
+                )
+              : ""
+          );
+          setCurrentCompanyIDValue(value);
+          const selectedRecord = companyIDRecords.find((r) => r.id === value);
+          if (selectedRecord) {
+            setSelectedCompanyIDRecords([selectedRecord]);
+          }
+        }}
+        inputFieldRef={companyIDRef}
+        defaultFieldValue={""}
+      >
+        <Autocomplete
+          label="Company id"
+          isRequired={true}
+          isReadOnly={false}
+          placeholder="Search Company"
+          value={currentCompanyIDDisplayValue}
+          options={companyIDRecords
+            .filter(
+              (r, i, arr) =>
+                arr.findIndex((member) => member?.id === r?.id) === i
+            )
+            .map((r) => ({
+              id: r?.id,
+              label: getDisplayValue.companyID?.(r),
+            }))}
+          isLoading={companyIDLoading}
+          onSelect={({ id, label }) => {
+            setCurrentCompanyIDValue(id);
+            setCurrentCompanyIDDisplayValue(label);
+            runValidationTasks("companyID", label);
+          }}
+          onClear={() => {
+            setCurrentCompanyIDDisplayValue("");
+          }}
+          defaultValue={companyID}
+          onChange={(e) => {
+            let { value } = e.target;
+            fetchCompanyIDRecords(value);
+            if (errors.companyID?.hasError) {
+              runValidationTasks("companyID", value);
+            }
+            setCurrentCompanyIDDisplayValue(value);
+            setCurrentCompanyIDValue(undefined);
+          }}
+          onBlur={() => runValidationTasks("companyID", currentCompanyIDValue)}
+          errorMessage={errors.companyID?.errorMessage}
+          hasError={errors.companyID?.hasError}
+          ref={companyIDRef}
+          labelHidden={true}
+          {...getOverrideProps(overrides, "companyID")}
         ></Autocomplete>
       </ArrayField>
       <Flex

@@ -26,16 +26,16 @@ export declare type CustomerUpdateFormInputValues = {
     phone?: string;
     invoiceStatus?: boolean;
     bulstat?: string;
-    companyName?: string;
     Sales?: any[];
+    companyID?: string;
 };
 export declare type CustomerUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     phone?: ValidationFunction<string>;
     invoiceStatus?: ValidationFunction<boolean>;
     bulstat?: ValidationFunction<string>;
-    companyName?: ValidationFunction<string>;
     Sales?: ValidationFunction<any>;
+    companyID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type CustomerUpdateFormOverridesProps = {
@@ -44,8 +44,8 @@ export declare type CustomerUpdateFormOverridesProps = {
     phone?: PrimitiveOverrideProps<TextFieldProps>;
     invoiceStatus?: PrimitiveOverrideProps<SwitchFieldProps>;
     bulstat?: PrimitiveOverrideProps<TextFieldProps>;
-    companyName?: PrimitiveOverrideProps<TextFieldProps>;
     Sales?: PrimitiveOverrideProps<AutocompleteProps>;
+    companyID?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type CustomerUpdateFormProps = React.PropsWithChildren<{
     overrides?: CustomerUpdateFormOverridesProps | undefined | null;

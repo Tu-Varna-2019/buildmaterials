@@ -25,15 +25,15 @@ export declare type MaterialCreateFormInputValues = {
     name?: string;
     quantityAvailable?: number;
     price?: number;
-    type?: string;
     Sales?: any[];
+    materialtypeID?: string;
 };
 export declare type MaterialCreateFormValidationValues = {
     name?: ValidationFunction<string>;
     quantityAvailable?: ValidationFunction<number>;
     price?: ValidationFunction<number>;
-    type?: ValidationFunction<string>;
     Sales?: ValidationFunction<any>;
+    materialtypeID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type MaterialCreateFormOverridesProps = {
@@ -41,8 +41,8 @@ export declare type MaterialCreateFormOverridesProps = {
     name?: PrimitiveOverrideProps<TextFieldProps>;
     quantityAvailable?: PrimitiveOverrideProps<TextFieldProps>;
     price?: PrimitiveOverrideProps<TextFieldProps>;
-    type?: PrimitiveOverrideProps<TextFieldProps>;
     Sales?: PrimitiveOverrideProps<AutocompleteProps>;
+    materialtypeID?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type MaterialCreateFormProps = React.PropsWithChildren<{
     overrides?: MaterialCreateFormOverridesProps | undefined | null;
