@@ -260,9 +260,23 @@ export default function SalesCreateForm(props) {
     materialID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
-    quantitySold: [],
-    salesDate: [],
-    totalPrice: [],
+    quantitySold: [
+      { type: "Required" },
+      {
+        type: "GreaterThanNum",
+        numValues: [-1],
+        validationMessage: "Quantity must be a positive number!",
+      },
+    ],
+    salesDate: [{ type: "Required" }],
+    totalPrice: [
+      { type: "Required" },
+      {
+        type: "GreaterThanNum",
+        numValues: [-1],
+        validationMessage: "The value must be greater than -1",
+      },
+    ],
     employeeID: [{ type: "Required" }],
     customerID: [{ type: "Required" }],
     materialID: [{ type: "Required" }],
@@ -439,8 +453,13 @@ export default function SalesCreateForm(props) {
       {...rest}
     >
       <TextField
-        label="Quantity sold"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Quantity sold</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         type="number"
         step="any"
@@ -472,8 +491,13 @@ export default function SalesCreateForm(props) {
         {...getOverrideProps(overrides, "quantitySold")}
       ></TextField>
       <TextField
-        label="Sales date"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Sales date</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         type="date"
         value={salesDate}
@@ -502,8 +526,13 @@ export default function SalesCreateForm(props) {
         {...getOverrideProps(overrides, "salesDate")}
       ></TextField>
       <TextField
-        label="Total price"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Total price</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         type="number"
         step="any"
@@ -554,7 +583,12 @@ export default function SalesCreateForm(props) {
           setCurrentEmployeeIDValue(undefined);
         }}
         currentFieldValue={currentEmployeeIDValue}
-        label={"Employee id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Employee id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={employeeID ? [employeeID] : []}
         hasError={errors?.employeeID?.hasError}
         runValidationTasks={async () =>
@@ -588,7 +622,12 @@ export default function SalesCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Employee id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Employee id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search Employee"
@@ -650,7 +689,12 @@ export default function SalesCreateForm(props) {
           setCurrentCustomerIDValue(undefined);
         }}
         currentFieldValue={currentCustomerIDValue}
-        label={"Customer id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Customer id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={customerID ? [customerID] : []}
         hasError={errors?.customerID?.hasError}
         runValidationTasks={async () =>
@@ -684,7 +728,12 @@ export default function SalesCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Customer id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Customer id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search Customer"
@@ -746,7 +795,12 @@ export default function SalesCreateForm(props) {
           setCurrentMaterialIDValue(undefined);
         }}
         currentFieldValue={currentMaterialIDValue}
-        label={"Material id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Material id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={materialID ? [materialID] : []}
         hasError={errors?.materialID?.hasError}
         runValidationTasks={async () =>
@@ -780,7 +834,12 @@ export default function SalesCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Material id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Material id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search Material"

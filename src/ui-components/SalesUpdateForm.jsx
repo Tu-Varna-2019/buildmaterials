@@ -15,6 +15,7 @@ import {
   Grid,
   Icon,
   ScrollView,
+  SelectField,
   Text,
   TextField,
   useTheme,
@@ -194,6 +195,7 @@ export default function SalesUpdateForm(props) {
     onSuccess,
     onError,
     onSubmit,
+    onCancel,
     onValidate,
     onChange,
     overrides,
@@ -206,6 +208,7 @@ export default function SalesUpdateForm(props) {
     employeeID: undefined,
     customerID: undefined,
     materialID: undefined,
+    items: "",
   };
   const [quantitySold, setQuantitySold] = React.useState(
     initialValues.quantitySold
@@ -227,6 +230,7 @@ export default function SalesUpdateForm(props) {
   const [materialIDRecords, setMaterialIDRecords] = React.useState([]);
   const [selectedMaterialIDRecords, setSelectedMaterialIDRecords] =
     React.useState([]);
+  const [items, setItems] = React.useState(initialValues.items);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
@@ -245,6 +249,7 @@ export default function SalesUpdateForm(props) {
     setMaterialID(cleanValues.materialID);
     setCurrentMaterialIDValue(undefined);
     setCurrentMaterialIDDisplayValue("");
+    setItems(cleanValues.items);
     setErrors({});
   };
   const [salesRecord, setSalesRecord] = React.useState(salesModelProp);
@@ -328,6 +333,7 @@ export default function SalesUpdateForm(props) {
     employeeID: [{ type: "Required" }],
     customerID: [{ type: "Required" }],
     materialID: [{ type: "Required" }],
+    items: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -447,6 +453,7 @@ export default function SalesUpdateForm(props) {
           employeeID,
           customerID,
           materialID,
+          items: items ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -476,12 +483,20 @@ export default function SalesUpdateForm(props) {
               modelFields[key] = null;
             }
           });
+          const modelFieldsToSave = {
+            quantitySold: modelFields.quantitySold ?? null,
+            salesDate: modelFields.salesDate ?? null,
+            totalPrice: modelFields.totalPrice ?? null,
+            employeeID: modelFields.employeeID,
+            customerID: modelFields.customerID,
+            materialID: modelFields.materialID,
+          };
           await client.graphql({
             query: updateSales.replaceAll("__typename", ""),
             variables: {
               input: {
                 id: salesRecord.id,
-                ...modelFields,
+                ...modelFieldsToSave,
               },
             },
           });
@@ -517,6 +532,7 @@ export default function SalesUpdateForm(props) {
               employeeID,
               customerID,
               materialID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.quantitySold ?? value;
@@ -547,6 +563,7 @@ export default function SalesUpdateForm(props) {
               employeeID,
               customerID,
               materialID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.salesDate ?? value;
@@ -580,6 +597,7 @@ export default function SalesUpdateForm(props) {
               employeeID,
               customerID,
               materialID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.totalPrice ?? value;
@@ -606,6 +624,7 @@ export default function SalesUpdateForm(props) {
               employeeID: value,
               customerID,
               materialID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.employeeID ?? value;
@@ -703,6 +722,7 @@ export default function SalesUpdateForm(props) {
               employeeID,
               customerID: value,
               materialID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.customerID ?? value;
@@ -800,6 +820,7 @@ export default function SalesUpdateForm(props) {
               employeeID,
               customerID,
               materialID: value,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.materialID ?? value;
@@ -885,24 +906,51 @@ export default function SalesUpdateForm(props) {
           {...getOverrideProps(overrides, "materialID")}
         ></Autocomplete>
       </ArrayField>
+      <SelectField
+        label="Sales"
+        placeholder=" "
+        value={items}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              quantitySold,
+              salesDate,
+              totalPrice,
+              employeeID,
+              customerID,
+              materialID,
+              items: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.items ?? value;
+          }
+          if (errors.items?.hasError) {
+            runValidationTasks("items", value);
+          }
+          setItems(value);
+        }}
+        onBlur={() => runValidationTasks("items", items)}
+        errorMessage={errors.items?.errorMessage}
+        hasError={errors.items?.hasError}
+        {...getOverrideProps(overrides, "items")}
+      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}
       >
-        <Button
-          children="Reset"
-          type="reset"
-          onClick={(event) => {
-            event.preventDefault();
-            resetStateValues();
-          }}
-          isDisabled={!(idProp || salesModelProp)}
-          {...getOverrideProps(overrides, "ResetButton")}
-        ></Button>
         <Flex
           gap="15px"
           {...getOverrideProps(overrides, "RightAlignCTASubFlex")}
         >
+          <Button
+            children="Delete"
+            type="button"
+            onClick={() => {
+              onCancel && onCancel();
+            }}
+            {...getOverrideProps(overrides, "CancelButton")}
+          ></Button>
           <Button
             children="Submit"
             type="submit"

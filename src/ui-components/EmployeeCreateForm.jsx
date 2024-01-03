@@ -15,15 +15,14 @@ import {
   Grid,
   Icon,
   ScrollView,
-  SelectField,
   Text,
   TextField,
   useTheme,
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { listMalls, listPositions, listSales } from "../graphql/queries";
-import { createEmployee, updateSales } from "../graphql/mutations";
+import { listMalls, listPositions } from "../graphql/queries";
+import { createEmployee } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
   items = [],
@@ -194,16 +193,11 @@ export default function EmployeeCreateForm(props) {
   const initialValues = {
     name: "",
     phone: "",
-    Sales: [],
     positionID: undefined,
     mallID: undefined,
-    position: "",
   };
   const [name, setName] = React.useState(initialValues.name);
   const [phone, setPhone] = React.useState(initialValues.phone);
-  const [Sales, setSales] = React.useState(initialValues.Sales);
-  const [SalesLoading, setSalesLoading] = React.useState(false);
-  const [salesRecords, setSalesRecords] = React.useState([]);
   const [positionID, setPositionID] = React.useState(initialValues.positionID);
   const [positionIDLoading, setPositionIDLoading] = React.useState(false);
   const [positionIDRecords, setPositionIDRecords] = React.useState([]);
@@ -213,28 +207,19 @@ export default function EmployeeCreateForm(props) {
   const [mallIDLoading, setMallIDLoading] = React.useState(false);
   const [mallIDRecords, setMallIDRecords] = React.useState([]);
   const [selectedMallIDRecords, setSelectedMallIDRecords] = React.useState([]);
-  const [position, setPosition] = React.useState(initialValues.position);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     setName(initialValues.name);
     setPhone(initialValues.phone);
-    setSales(initialValues.Sales);
-    setCurrentSalesValue(undefined);
-    setCurrentSalesDisplayValue("");
     setPositionID(initialValues.positionID);
     setCurrentPositionIDValue(undefined);
     setCurrentPositionIDDisplayValue("");
     setMallID(initialValues.mallID);
     setCurrentMallIDValue(undefined);
     setCurrentMallIDDisplayValue("");
-    setPosition(initialValues.position);
     setErrors({});
   };
-  const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
-    React.useState("");
-  const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
-  const SalesRef = React.createRef();
   const [currentPositionIDDisplayValue, setCurrentPositionIDDisplayValue] =
     React.useState("");
   const [currentPositionIDValue, setCurrentPositionIDValue] =
@@ -244,26 +229,15 @@ export default function EmployeeCreateForm(props) {
     React.useState("");
   const [currentMallIDValue, setCurrentMallIDValue] = React.useState(undefined);
   const mallIDRef = React.createRef();
-  const getIDValue = {
-    Sales: (r) => JSON.stringify({ id: r?.id }),
-  };
-  const SalesIdSet = new Set(
-    Array.isArray(Sales)
-      ? Sales.map((r) => getIDValue.Sales?.(r))
-      : getIDValue.Sales?.(Sales)
-  );
   const getDisplayValue = {
-    Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
     positionID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
     mallID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
-    name: [],
+    name: [{ type: "Required" }],
     phone: [{ type: "Phone" }],
-    Sales: [],
     positionID: [{ type: "Required" }],
     mallID: [{ type: "Required" }],
-    position: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -281,38 +255,6 @@ export default function EmployeeCreateForm(props) {
     }
     setErrors((errors) => ({ ...errors, [fieldName]: validationResponse }));
     return validationResponse;
-  };
-  const fetchSalesRecords = async (value) => {
-    setSalesLoading(true);
-    const newOptions = [];
-    let newNext = "";
-    while (newOptions.length < autocompleteLength && newNext != null) {
-      const variables = {
-        limit: autocompleteLength * 5,
-        filter: {
-          or: [
-            { quantitySold: { contains: value } },
-            { id: { contains: value } },
-          ],
-        },
-      };
-      if (newNext) {
-        variables["nextToken"] = newNext;
-      }
-      const result = (
-        await client.graphql({
-          query: listSales.replaceAll("__typename", ""),
-          variables,
-        })
-      )?.data?.listSales?.items;
-      var loaded = result.filter(
-        (item) => !SalesIdSet.has(getIDValue.Sales?.(item))
-      );
-      newOptions.push(...loaded);
-      newNext = result.nextToken;
-    }
-    setSalesRecords(newOptions.slice(0, autocompleteLength));
-    setSalesLoading(false);
   };
   const fetchPositionIDRecords = async (value) => {
     setPositionIDLoading(true);
@@ -369,7 +311,6 @@ export default function EmployeeCreateForm(props) {
     setMallIDLoading(false);
   };
   React.useEffect(() => {
-    fetchSalesRecords("");
     fetchPositionIDRecords("");
     fetchMallIDRecords("");
   }, []);
@@ -384,31 +325,21 @@ export default function EmployeeCreateForm(props) {
         let modelFields = {
           name,
           phone,
-          Sales,
           positionID,
           mallID,
-          position,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
             if (Array.isArray(modelFields[fieldName])) {
               promises.push(
                 ...modelFields[fieldName].map((item) =>
-                  runValidationTasks(
-                    fieldName,
-                    item,
-                    getDisplayValue[fieldName]
-                  )
+                  runValidationTasks(fieldName, item)
                 )
               );
               return promises;
             }
             promises.push(
-              runValidationTasks(
-                fieldName,
-                modelFields[fieldName],
-                getDisplayValue[fieldName]
-              )
+              runValidationTasks(fieldName, modelFields[fieldName])
             );
             return promises;
           }, [])
@@ -425,40 +356,14 @@ export default function EmployeeCreateForm(props) {
               modelFields[key] = null;
             }
           });
-          const modelFieldsToSave = {
-            name: modelFields.name,
-            phone: modelFields.phone,
-            positionID: modelFields.positionID,
-            mallID: modelFields.mallID,
-          };
-          const employee = (
-            await client.graphql({
-              query: createEmployee.replaceAll("__typename", ""),
-              variables: {
-                input: {
-                  ...modelFieldsToSave,
-                },
+          await client.graphql({
+            query: createEmployee.replaceAll("__typename", ""),
+            variables: {
+              input: {
+                ...modelFields,
               },
-            })
-          )?.data?.createEmployee;
-          const promises = [];
-          promises.push(
-            ...Sales.reduce((promises, original) => {
-              promises.push(
-                client.graphql({
-                  query: updateSales.replaceAll("__typename", ""),
-                  variables: {
-                    input: {
-                      id: original.id,
-                      employeeID: employee.id,
-                    },
-                  },
-                })
-              );
-              return promises;
-            }, [])
-          );
-          await Promise.all(promises);
+            },
+          });
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -476,8 +381,13 @@ export default function EmployeeCreateForm(props) {
       {...rest}
     >
       <TextField
-        label="Name"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Name</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         value={name}
         onChange={(e) => {
@@ -486,10 +396,8 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name: value,
               phone,
-              Sales,
               positionID,
               mallID,
-              position,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -516,10 +424,8 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name,
               phone: value,
-              Sales,
               positionID,
               mallID,
-              position,
             };
             const result = onChange(modelFields);
             value = result?.phone ?? value;
@@ -535,87 +441,6 @@ export default function EmployeeCreateForm(props) {
         {...getOverrideProps(overrides, "phone")}
       ></TextField>
       <ArrayField
-        onChange={async (items) => {
-          let values = items;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              Sales: values,
-              positionID,
-              mallID,
-              position,
-            };
-            const result = onChange(modelFields);
-            values = result?.Sales ?? values;
-          }
-          setSales(values);
-          setCurrentSalesValue(undefined);
-          setCurrentSalesDisplayValue("");
-        }}
-        currentFieldValue={currentSalesValue}
-        label={"Sales"}
-        items={Sales}
-        hasError={errors?.Sales?.hasError}
-        runValidationTasks={async () =>
-          await runValidationTasks("Sales", currentSalesValue)
-        }
-        errorMessage={errors?.Sales?.errorMessage}
-        getBadgeText={getDisplayValue.Sales}
-        setFieldValue={(model) => {
-          setCurrentSalesDisplayValue(
-            model ? getDisplayValue.Sales(model) : ""
-          );
-          setCurrentSalesValue(model);
-        }}
-        inputFieldRef={SalesRef}
-        defaultFieldValue={""}
-      >
-        <Autocomplete
-          label="Sales"
-          isRequired={false}
-          isReadOnly={false}
-          placeholder="Search Sales"
-          value={currentSalesDisplayValue}
-          options={salesRecords
-            .filter((r) => !SalesIdSet.has(getIDValue.Sales?.(r)))
-            .map((r) => ({
-              id: getIDValue.Sales?.(r),
-              label: getDisplayValue.Sales?.(r),
-            }))}
-          isLoading={SalesLoading}
-          onSelect={({ id, label }) => {
-            setCurrentSalesValue(
-              salesRecords.find((r) =>
-                Object.entries(JSON.parse(id)).every(
-                  ([key, value]) => r[key] === value
-                )
-              )
-            );
-            setCurrentSalesDisplayValue(label);
-            runValidationTasks("Sales", label);
-          }}
-          onClear={() => {
-            setCurrentSalesDisplayValue("");
-          }}
-          onChange={(e) => {
-            let { value } = e.target;
-            fetchSalesRecords(value);
-            if (errors.Sales?.hasError) {
-              runValidationTasks("Sales", value);
-            }
-            setCurrentSalesDisplayValue(value);
-            setCurrentSalesValue(undefined);
-          }}
-          onBlur={() => runValidationTasks("Sales", currentSalesDisplayValue)}
-          errorMessage={errors.Sales?.errorMessage}
-          hasError={errors.Sales?.hasError}
-          ref={SalesRef}
-          labelHidden={true}
-          {...getOverrideProps(overrides, "Sales")}
-        ></Autocomplete>
-      </ArrayField>
-      <ArrayField
         lengthLimit={1}
         onChange={async (items) => {
           let value = items[0];
@@ -623,10 +448,8 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name,
               phone,
-              Sales,
               positionID: value,
               mallID,
-              position,
             };
             const result = onChange(modelFields);
             value = result?.positionID ?? value;
@@ -635,7 +458,12 @@ export default function EmployeeCreateForm(props) {
           setCurrentPositionIDValue(undefined);
         }}
         currentFieldValue={currentPositionIDValue}
-        label={"Position id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Position id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={positionID ? [positionID] : []}
         hasError={errors?.positionID?.hasError}
         runValidationTasks={async () =>
@@ -669,7 +497,12 @@ export default function EmployeeCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Position id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Position id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search Position"
@@ -719,10 +552,8 @@ export default function EmployeeCreateForm(props) {
             const modelFields = {
               name,
               phone,
-              Sales,
               positionID,
               mallID: value,
-              position,
             };
             const result = onChange(modelFields);
             value = result?.mallID ?? value;
@@ -731,7 +562,12 @@ export default function EmployeeCreateForm(props) {
           setCurrentMallIDValue(undefined);
         }}
         currentFieldValue={currentMallIDValue}
-        label={"Mall id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Mall id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={mallID ? [mallID] : []}
         hasError={errors?.mallID?.hasError}
         runValidationTasks={async () =>
@@ -765,7 +601,12 @@ export default function EmployeeCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Mall id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Mall id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search Mall"
@@ -805,34 +646,6 @@ export default function EmployeeCreateForm(props) {
           {...getOverrideProps(overrides, "mallID")}
         ></Autocomplete>
       </ArrayField>
-      <SelectField
-        label="Label"
-        placeholder="Please select an option"
-        value={position}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              Sales,
-              positionID,
-              mallID,
-              position: value,
-            };
-            const result = onChange(modelFields);
-            value = result?.position ?? value;
-          }
-          if (errors.position?.hasError) {
-            runValidationTasks("position", value);
-          }
-          setPosition(value);
-        }}
-        onBlur={() => runValidationTasks("position", position)}
-        errorMessage={errors.position?.errorMessage}
-        hasError={errors.position?.hasError}
-        {...getOverrideProps(overrides, "position")}
-      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}

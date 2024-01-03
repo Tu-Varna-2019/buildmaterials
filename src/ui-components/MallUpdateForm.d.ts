@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SelectFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -24,16 +24,19 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type MallUpdateFormInputValues = {
     name?: string;
     Employees?: any[];
+    items?: string;
 };
 export declare type MallUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     Employees?: ValidationFunction<any>;
+    items?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type MallUpdateFormOverridesProps = {
     MallUpdateFormGrid?: PrimitiveOverrideProps<GridProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
     Employees?: PrimitiveOverrideProps<AutocompleteProps>;
+    items?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type MallUpdateFormProps = React.PropsWithChildren<{
     overrides?: MallUpdateFormOverridesProps | undefined | null;
@@ -43,6 +46,7 @@ export declare type MallUpdateFormProps = React.PropsWithChildren<{
     onSubmit?: (fields: MallUpdateFormInputValues) => MallUpdateFormInputValues;
     onSuccess?: (fields: MallUpdateFormInputValues) => void;
     onError?: (fields: MallUpdateFormInputValues, errorMessage: string) => void;
+    onCancel?: () => void;
     onChange?: (fields: MallUpdateFormInputValues) => MallUpdateFormInputValues;
     onValidate?: MallUpdateFormValidationValues;
 } & React.CSSProperties>;

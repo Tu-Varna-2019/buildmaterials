@@ -1,9 +1,9 @@
+import { fetchUserAttributes } from "aws-amplify/auth";
 import React, { useEffect, useState } from "react";
 import { HelpersContext } from "../../contexts/data_models/context";
-import { listEmployees, listPositions, listMalls } from "../../graphql/queries";
-import { fetchUserAttributes } from "aws-amplify/auth";
 import { createEmployee } from "../../graphql/mutations";
-import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { listEmployees, listMalls, listPositions } from "../../graphql/queries";
+import { deleteEmployee } from "../../graphql/mutations";
 
 export function Employee() {
   const [cID, setCID] = useState("");
@@ -11,10 +11,32 @@ export function Employee() {
   const [phone, setPhone] = useState([]);
   const [molAssigned, setMolAssigned] = useState("");
   const [position, setPosition] = useState("");
-  const [positionIDNames, setPositionIDNames] = useState({});
+
+  const [selectedEmployeeID, setSelectedEmployeeID] = useState("");
+  const [allEmployeeIDNames, setAllEmployeeIDNames] = useState({});
 
   const { UtilsObject } = React.useContext(HelpersContext);
   const { logger, client } = UtilsObject;
+
+  // Fetch all employees
+  useEffect(() => {
+    async function getAllEmployees() {
+      try {
+        const response = await client.graphql({
+          query: listEmployees,
+        });
+        response.data.listEmployees.items.forEach((employee) => {
+          setAllEmployeeIDNames((prevState) => ({
+            ...prevState,
+            [employee.id]: employee.name,
+          }));
+        });
+      } catch (error) {
+        logger.error(error);
+      }
+    }
+    getAllEmployees();
+  }, [client, logger]);
 
   const handleNameChange = (event) => {
     setName(event.target.value);
@@ -94,8 +116,27 @@ export function Employee() {
     fetchData();
   }, []);
 
+  const deleteSelectedEmployee = async () => {
+    try {
+      await client.graphql({
+        query: deleteEmployee,
+        variables: {
+          input: {
+            id: selectedEmployeeID,
+          },
+        },
+      });
+    } catch (error) {
+      logger.error(error);
+    }
+  };
+
   return {
-    positionIDNames,
+    deleteSelectedEmployee,
+    selectedEmployeeID,
+    setSelectedEmployeeID,
+    allEmployeeIDNames,
+    setAllEmployeeIDNames,
     cID,
     name,
     phone,

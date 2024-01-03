@@ -6,6 +6,7 @@ export function HomeComponent() {
   const { ComponentStateObject } = React.useContext(ComponentStateContext);
 
   const selectFieldCreateUpdateOptions = [
+    "",
     "Company",
     "MaterialType",
     "Mall",
@@ -49,20 +50,13 @@ export function HomeComponent() {
     }
   };
 
-  const handleSelectFieldInqueryOptions = (event) => {
-    switch (event.target.value) {
-      case "add":
-        break;
-    }
-  };
-
   const handleSelectFieldCreateOptions = (event) => {
     switch (event.target.value) {
       case "Company":
         ComponentStateObject.setShowCreateCompanyPage(true);
         break;
       case "MaterialType":
-        ComponentStateObject.showCreateMaterialTypePage(true);
+        ComponentStateObject.setShowCreateMaterialTypePage(true);
         break;
       case "Mall":
         ComponentStateObject.setShowCreateMallPage(true);
@@ -81,10 +75,18 @@ export function HomeComponent() {
         break;
       case "Customer":
         ComponentStateObject.setShowCreateCustomerPage(true);
+
         break;
 
       default:
         console.log("Error: No option selected");
+        break;
+    }
+  };
+
+  const handleSelectFieldInqueryOptions = (event) => {
+    switch (event.target.value) {
+      case "add":
         break;
     }
   };

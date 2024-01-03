@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, DividerProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -25,14 +25,12 @@ export declare type MaterialCreateFormInputValues = {
     name?: string;
     quantityAvailable?: number;
     price?: number;
-    Sales?: any[];
     materialtypeID?: string;
 };
 export declare type MaterialCreateFormValidationValues = {
     name?: ValidationFunction<string>;
     quantityAvailable?: ValidationFunction<number>;
     price?: ValidationFunction<number>;
-    Sales?: ValidationFunction<any>;
     materialtypeID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
@@ -41,8 +39,8 @@ export declare type MaterialCreateFormOverridesProps = {
     name?: PrimitiveOverrideProps<TextFieldProps>;
     quantityAvailable?: PrimitiveOverrideProps<TextFieldProps>;
     price?: PrimitiveOverrideProps<TextFieldProps>;
-    Sales?: PrimitiveOverrideProps<AutocompleteProps>;
     materialtypeID?: PrimitiveOverrideProps<AutocompleteProps>;
+    SectionalElement0?: PrimitiveOverrideProps<DividerProps>;
 } & EscapeHatchProps;
 export declare type MaterialCreateFormProps = React.PropsWithChildren<{
     overrides?: MaterialCreateFormOverridesProps | undefined | null;

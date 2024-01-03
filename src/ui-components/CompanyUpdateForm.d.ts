@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SelectFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -24,16 +24,19 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type CompanyUpdateFormInputValues = {
     name?: string;
     Customers?: any[];
+    items?: string;
 };
 export declare type CompanyUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     Customers?: ValidationFunction<any>;
+    items?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type CompanyUpdateFormOverridesProps = {
     CompanyUpdateFormGrid?: PrimitiveOverrideProps<GridProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
     Customers?: PrimitiveOverrideProps<AutocompleteProps>;
+    items?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type CompanyUpdateFormProps = React.PropsWithChildren<{
     overrides?: CompanyUpdateFormOverridesProps | undefined | null;
@@ -43,6 +46,7 @@ export declare type CompanyUpdateFormProps = React.PropsWithChildren<{
     onSubmit?: (fields: CompanyUpdateFormInputValues) => CompanyUpdateFormInputValues;
     onSuccess?: (fields: CompanyUpdateFormInputValues) => void;
     onError?: (fields: CompanyUpdateFormInputValues, errorMessage: string) => void;
+    onCancel?: () => void;
     onChange?: (fields: CompanyUpdateFormInputValues) => CompanyUpdateFormInputValues;
     onValidate?: CompanyUpdateFormValidationValues;
 } & React.CSSProperties>;

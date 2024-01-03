@@ -15,6 +15,7 @@ import {
   Grid,
   Icon,
   ScrollView,
+  SelectField,
   SwitchField,
   Text,
   TextField,
@@ -22,13 +23,8 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import {
-  getCompany,
-  getCustomer,
-  listCompanies,
-  listSales,
-} from "../graphql/queries";
-import { updateCustomer, updateSales } from "../graphql/mutations";
+import { getCompany, getCustomer, listCompanies } from "../graphql/queries";
+import { updateCustomer } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
   items = [],
@@ -192,6 +188,7 @@ export default function CustomerUpdateForm(props) {
     onSuccess,
     onError,
     onSubmit,
+    onCancel,
     onValidate,
     onChange,
     overrides,
@@ -202,8 +199,8 @@ export default function CustomerUpdateForm(props) {
     phone: "",
     invoiceStatus: false,
     bulstat: "",
-    Sales: [],
     companyID: undefined,
+    items: "",
   };
   const [name, setName] = React.useState(initialValues.name);
   const [phone, setPhone] = React.useState(initialValues.phone);
@@ -211,35 +208,29 @@ export default function CustomerUpdateForm(props) {
     initialValues.invoiceStatus
   );
   const [bulstat, setBulstat] = React.useState(initialValues.bulstat);
-  const [Sales, setSales] = React.useState(initialValues.Sales);
-  const [SalesLoading, setSalesLoading] = React.useState(false);
-  const [salesRecords, setSalesRecords] = React.useState([]);
   const [companyID, setCompanyID] = React.useState(initialValues.companyID);
   const [companyIDLoading, setCompanyIDLoading] = React.useState(false);
   const [companyIDRecords, setCompanyIDRecords] = React.useState([]);
   const [selectedCompanyIDRecords, setSelectedCompanyIDRecords] =
     React.useState([]);
+  const [items, setItems] = React.useState(initialValues.items);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = customerRecord
-      ? { ...initialValues, ...customerRecord, Sales: linkedSales, companyID }
+      ? { ...initialValues, ...customerRecord, companyID }
       : initialValues;
     setName(cleanValues.name);
     setPhone(cleanValues.phone);
     setInvoiceStatus(cleanValues.invoiceStatus);
     setBulstat(cleanValues.bulstat);
-    setSales(cleanValues.Sales ?? []);
-    setCurrentSalesValue(undefined);
-    setCurrentSalesDisplayValue("");
     setCompanyID(cleanValues.companyID);
     setCurrentCompanyIDValue(undefined);
     setCurrentCompanyIDDisplayValue("");
+    setItems(cleanValues.items);
     setErrors({});
   };
   const [customerRecord, setCustomerRecord] = React.useState(customerModelProp);
-  const [linkedSales, setLinkedSales] = React.useState([]);
-  const canUnlinkSales = false;
   React.useEffect(() => {
     const queryData = async () => {
       const record = idProp
@@ -250,8 +241,6 @@ export default function CustomerUpdateForm(props) {
             })
           )?.data?.getCustomer
         : customerModelProp;
-      const linkedSales = record?.Sales?.items ?? [];
-      setLinkedSales(linkedSales);
       const companyIDRecord = record ? record.companyID : undefined;
       const companyRecord = companyIDRecord
         ? (
@@ -267,26 +256,13 @@ export default function CustomerUpdateForm(props) {
     };
     queryData();
   }, [idProp, customerModelProp]);
-  React.useEffect(resetStateValues, [customerRecord, linkedSales, companyID]);
-  const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
-    React.useState("");
-  const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
-  const SalesRef = React.createRef();
+  React.useEffect(resetStateValues, [customerRecord, companyID]);
   const [currentCompanyIDDisplayValue, setCurrentCompanyIDDisplayValue] =
     React.useState("");
   const [currentCompanyIDValue, setCurrentCompanyIDValue] =
     React.useState(undefined);
   const companyIDRef = React.createRef();
-  const getIDValue = {
-    Sales: (r) => JSON.stringify({ id: r?.id }),
-  };
-  const SalesIdSet = new Set(
-    Array.isArray(Sales)
-      ? Sales.map((r) => getIDValue.Sales?.(r))
-      : getIDValue.Sales?.(Sales)
-  );
   const getDisplayValue = {
-    Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
     companyID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
@@ -294,8 +270,8 @@ export default function CustomerUpdateForm(props) {
     phone: [{ type: "Phone" }],
     invoiceStatus: [],
     bulstat: [],
-    Sales: [],
     companyID: [{ type: "Required" }],
+    items: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -313,38 +289,6 @@ export default function CustomerUpdateForm(props) {
     }
     setErrors((errors) => ({ ...errors, [fieldName]: validationResponse }));
     return validationResponse;
-  };
-  const fetchSalesRecords = async (value) => {
-    setSalesLoading(true);
-    const newOptions = [];
-    let newNext = "";
-    while (newOptions.length < autocompleteLength && newNext != null) {
-      const variables = {
-        limit: autocompleteLength * 5,
-        filter: {
-          or: [
-            { quantitySold: { contains: value } },
-            { id: { contains: value } },
-          ],
-        },
-      };
-      if (newNext) {
-        variables["nextToken"] = newNext;
-      }
-      const result = (
-        await client.graphql({
-          query: listSales.replaceAll("__typename", ""),
-          variables,
-        })
-      )?.data?.listSales?.items;
-      var loaded = result.filter(
-        (item) => !SalesIdSet.has(getIDValue.Sales?.(item))
-      );
-      newOptions.push(...loaded);
-      newNext = result.nextToken;
-    }
-    setSalesRecords(newOptions.slice(0, autocompleteLength));
-    setSalesLoading(false);
   };
   const fetchCompanyIDRecords = async (value) => {
     setCompanyIDLoading(true);
@@ -374,7 +318,6 @@ export default function CustomerUpdateForm(props) {
     setCompanyIDLoading(false);
   };
   React.useEffect(() => {
-    fetchSalesRecords("");
     fetchCompanyIDRecords("");
   }, []);
   return (
@@ -390,29 +333,21 @@ export default function CustomerUpdateForm(props) {
           phone: phone ?? null,
           invoiceStatus: invoiceStatus ?? null,
           bulstat: bulstat ?? null,
-          Sales: Sales ?? null,
           companyID,
+          items: items ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
             if (Array.isArray(modelFields[fieldName])) {
               promises.push(
                 ...modelFields[fieldName].map((item) =>
-                  runValidationTasks(
-                    fieldName,
-                    item,
-                    getDisplayValue[fieldName]
-                  )
+                  runValidationTasks(fieldName, item)
                 )
               );
               return promises;
             }
             promises.push(
-              runValidationTasks(
-                fieldName,
-                modelFields[fieldName],
-                getDisplayValue[fieldName]
-              )
+              runValidationTasks(fieldName, modelFields[fieldName])
             );
             return promises;
           }, [])
@@ -429,54 +364,6 @@ export default function CustomerUpdateForm(props) {
               modelFields[key] = null;
             }
           });
-          const promises = [];
-          const salesToLink = [];
-          const salesToUnLink = [];
-          const salesSet = new Set();
-          const linkedSalesSet = new Set();
-          Sales.forEach((r) => salesSet.add(getIDValue.Sales?.(r)));
-          linkedSales.forEach((r) => linkedSalesSet.add(getIDValue.Sales?.(r)));
-          linkedSales.forEach((r) => {
-            if (!salesSet.has(getIDValue.Sales?.(r))) {
-              salesToUnLink.push(r);
-            }
-          });
-          Sales.forEach((r) => {
-            if (!linkedSalesSet.has(getIDValue.Sales?.(r))) {
-              salesToLink.push(r);
-            }
-          });
-          salesToUnLink.forEach((original) => {
-            if (!canUnlinkSales) {
-              throw Error(
-                `Sales ${original.id} cannot be unlinked from Customer because customerID is a required field.`
-              );
-            }
-            promises.push(
-              client.graphql({
-                query: updateSales.replaceAll("__typename", ""),
-                variables: {
-                  input: {
-                    id: original.id,
-                    customerID: null,
-                  },
-                },
-              })
-            );
-          });
-          salesToLink.forEach((original) => {
-            promises.push(
-              client.graphql({
-                query: updateSales.replaceAll("__typename", ""),
-                variables: {
-                  input: {
-                    id: original.id,
-                    customerID: customerRecord.id,
-                  },
-                },
-              })
-            );
-          });
           const modelFieldsToSave = {
             name: modelFields.name ?? null,
             phone: modelFields.phone ?? null,
@@ -484,18 +371,15 @@ export default function CustomerUpdateForm(props) {
             bulstat: modelFields.bulstat ?? null,
             companyID: modelFields.companyID,
           };
-          promises.push(
-            client.graphql({
-              query: updateCustomer.replaceAll("__typename", ""),
-              variables: {
-                input: {
-                  id: customerRecord.id,
-                  ...modelFieldsToSave,
-                },
+          await client.graphql({
+            query: updateCustomer.replaceAll("__typename", ""),
+            variables: {
+              input: {
+                id: customerRecord.id,
+                ...modelFieldsToSave,
               },
-            })
-          );
-          await Promise.all(promises);
+            },
+          });
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -522,8 +406,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus,
               bulstat,
-              Sales,
               companyID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -552,8 +436,8 @@ export default function CustomerUpdateForm(props) {
               phone: value,
               invoiceStatus,
               bulstat,
-              Sales,
               companyID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.phone ?? value;
@@ -581,8 +465,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus: value,
               bulstat,
-              Sales,
               companyID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.invoiceStatus ?? value;
@@ -610,8 +494,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus,
               bulstat: value,
-              Sales,
               companyID,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.bulstat ?? value;
@@ -627,87 +511,6 @@ export default function CustomerUpdateForm(props) {
         {...getOverrideProps(overrides, "bulstat")}
       ></TextField>
       <ArrayField
-        onChange={async (items) => {
-          let values = items;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              invoiceStatus,
-              bulstat,
-              Sales: values,
-              companyID,
-            };
-            const result = onChange(modelFields);
-            values = result?.Sales ?? values;
-          }
-          setSales(values);
-          setCurrentSalesValue(undefined);
-          setCurrentSalesDisplayValue("");
-        }}
-        currentFieldValue={currentSalesValue}
-        label={"Sales"}
-        items={Sales}
-        hasError={errors?.Sales?.hasError}
-        runValidationTasks={async () =>
-          await runValidationTasks("Sales", currentSalesValue)
-        }
-        errorMessage={errors?.Sales?.errorMessage}
-        getBadgeText={getDisplayValue.Sales}
-        setFieldValue={(model) => {
-          setCurrentSalesDisplayValue(
-            model ? getDisplayValue.Sales(model) : ""
-          );
-          setCurrentSalesValue(model);
-        }}
-        inputFieldRef={SalesRef}
-        defaultFieldValue={""}
-      >
-        <Autocomplete
-          label="Sales"
-          isRequired={false}
-          isReadOnly={false}
-          placeholder="Search Sales"
-          value={currentSalesDisplayValue}
-          options={salesRecords
-            .filter((r) => !SalesIdSet.has(getIDValue.Sales?.(r)))
-            .map((r) => ({
-              id: getIDValue.Sales?.(r),
-              label: getDisplayValue.Sales?.(r),
-            }))}
-          isLoading={SalesLoading}
-          onSelect={({ id, label }) => {
-            setCurrentSalesValue(
-              salesRecords.find((r) =>
-                Object.entries(JSON.parse(id)).every(
-                  ([key, value]) => r[key] === value
-                )
-              )
-            );
-            setCurrentSalesDisplayValue(label);
-            runValidationTasks("Sales", label);
-          }}
-          onClear={() => {
-            setCurrentSalesDisplayValue("");
-          }}
-          onChange={(e) => {
-            let { value } = e.target;
-            fetchSalesRecords(value);
-            if (errors.Sales?.hasError) {
-              runValidationTasks("Sales", value);
-            }
-            setCurrentSalesDisplayValue(value);
-            setCurrentSalesValue(undefined);
-          }}
-          onBlur={() => runValidationTasks("Sales", currentSalesDisplayValue)}
-          errorMessage={errors.Sales?.errorMessage}
-          hasError={errors.Sales?.hasError}
-          ref={SalesRef}
-          labelHidden={true}
-          {...getOverrideProps(overrides, "Sales")}
-        ></Autocomplete>
-      </ArrayField>
-      <ArrayField
         lengthLimit={1}
         onChange={async (items) => {
           let value = items[0];
@@ -717,8 +520,8 @@ export default function CustomerUpdateForm(props) {
               phone,
               invoiceStatus,
               bulstat,
-              Sales,
               companyID: value,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.companyID ?? value;
@@ -802,24 +605,50 @@ export default function CustomerUpdateForm(props) {
           {...getOverrideProps(overrides, "companyID")}
         ></Autocomplete>
       </ArrayField>
+      <SelectField
+        label="Customers"
+        placeholder=" "
+        value={items}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              name,
+              phone,
+              invoiceStatus,
+              bulstat,
+              companyID,
+              items: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.items ?? value;
+          }
+          if (errors.items?.hasError) {
+            runValidationTasks("items", value);
+          }
+          setItems(value);
+        }}
+        onBlur={() => runValidationTasks("items", items)}
+        errorMessage={errors.items?.errorMessage}
+        hasError={errors.items?.hasError}
+        {...getOverrideProps(overrides, "items")}
+      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}
       >
-        <Button
-          children="Reset"
-          type="reset"
-          onClick={(event) => {
-            event.preventDefault();
-            resetStateValues();
-          }}
-          isDisabled={!(idProp || customerModelProp)}
-          {...getOverrideProps(overrides, "ResetButton")}
-        ></Button>
         <Flex
           gap="15px"
           {...getOverrideProps(overrides, "RightAlignCTASubFlex")}
         >
+          <Button
+            children="Delete"
+            type="button"
+            onClick={() => {
+              onCancel && onCancel();
+            }}
+            {...getOverrideProps(overrides, "CancelButton")}
+          ></Button>
           <Button
             children="Submit"
             type="submit"

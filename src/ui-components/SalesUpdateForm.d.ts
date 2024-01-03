@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SelectFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -28,6 +28,7 @@ export declare type SalesUpdateFormInputValues = {
     employeeID?: string;
     customerID?: string;
     materialID?: string;
+    items?: string;
 };
 export declare type SalesUpdateFormValidationValues = {
     quantitySold?: ValidationFunction<number>;
@@ -36,6 +37,7 @@ export declare type SalesUpdateFormValidationValues = {
     employeeID?: ValidationFunction<string>;
     customerID?: ValidationFunction<string>;
     materialID?: ValidationFunction<string>;
+    items?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type SalesUpdateFormOverridesProps = {
@@ -46,6 +48,7 @@ export declare type SalesUpdateFormOverridesProps = {
     employeeID?: PrimitiveOverrideProps<AutocompleteProps>;
     customerID?: PrimitiveOverrideProps<AutocompleteProps>;
     materialID?: PrimitiveOverrideProps<AutocompleteProps>;
+    items?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type SalesUpdateFormProps = React.PropsWithChildren<{
     overrides?: SalesUpdateFormOverridesProps | undefined | null;
@@ -55,6 +58,7 @@ export declare type SalesUpdateFormProps = React.PropsWithChildren<{
     onSubmit?: (fields: SalesUpdateFormInputValues) => SalesUpdateFormInputValues;
     onSuccess?: (fields: SalesUpdateFormInputValues) => void;
     onError?: (fields: SalesUpdateFormInputValues, errorMessage: string) => void;
+    onCancel?: () => void;
     onChange?: (fields: SalesUpdateFormInputValues) => SalesUpdateFormInputValues;
     onValidate?: SalesUpdateFormValidationValues;
 } & React.CSSProperties>;

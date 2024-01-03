@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SelectFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -24,25 +24,25 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type EmployeeUpdateFormInputValues = {
     name?: string;
     phone?: string;
-    Sales?: any[];
     positionID?: string;
     mallID?: string;
+    items?: string;
 };
 export declare type EmployeeUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     phone?: ValidationFunction<string>;
-    Sales?: ValidationFunction<any>;
     positionID?: ValidationFunction<string>;
     mallID?: ValidationFunction<string>;
+    items?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type EmployeeUpdateFormOverridesProps = {
     EmployeeUpdateFormGrid?: PrimitiveOverrideProps<GridProps>;
     name?: PrimitiveOverrideProps<TextFieldProps>;
     phone?: PrimitiveOverrideProps<TextFieldProps>;
-    Sales?: PrimitiveOverrideProps<AutocompleteProps>;
     positionID?: PrimitiveOverrideProps<AutocompleteProps>;
     mallID?: PrimitiveOverrideProps<AutocompleteProps>;
+    items?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type EmployeeUpdateFormProps = React.PropsWithChildren<{
     overrides?: EmployeeUpdateFormOverridesProps | undefined | null;
@@ -52,6 +52,7 @@ export declare type EmployeeUpdateFormProps = React.PropsWithChildren<{
     onSubmit?: (fields: EmployeeUpdateFormInputValues) => EmployeeUpdateFormInputValues;
     onSuccess?: (fields: EmployeeUpdateFormInputValues) => void;
     onError?: (fields: EmployeeUpdateFormInputValues, errorMessage: string) => void;
+    onCancel?: () => void;
     onChange?: (fields: EmployeeUpdateFormInputValues) => EmployeeUpdateFormInputValues;
     onValidate?: EmployeeUpdateFormValidationValues;
 } & React.CSSProperties>;

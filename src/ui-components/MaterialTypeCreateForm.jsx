@@ -224,7 +224,7 @@ export default function MaterialTypeCreateForm(props) {
     Materials: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
-    name: [],
+    name: [{ type: "Required" }],
     Materials: [],
   };
   const runValidationTasks = async (
@@ -372,8 +372,13 @@ export default function MaterialTypeCreateForm(props) {
       {...rest}
     >
       <TextField
-        label="Name"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Name</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         value={name}
         onChange={(e) => {

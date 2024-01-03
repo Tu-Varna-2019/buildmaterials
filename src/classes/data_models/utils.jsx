@@ -8,6 +8,8 @@ export function Utils() {
   const client = generateClient();
   const navigate = useNavigate();
 
+  const [homeText, setHomeText] = React.useState("Home");
+
   const [showAlertBox, setShowAlertBox] = React.useState(false);
   const [alertBoxMessage, setAlertBoxMessage] = React.useState("");
   const [alertBoxHeading, setAlertBoxHeading] = React.useState("");
@@ -21,16 +23,14 @@ export function Utils() {
     setShowAlertBox(true);
   };
 
-  const toAWSDateFormat = (isoDateTime) => {
-    const dateObject = new Date(isoDateTime);
-    const year = dateObject.getFullYear();
-    const month = String(dateObject.getMonth() + 1).padStart(2, "0");
-    const day = String(dateObject.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
+  function dictFindKeyByValue(object, value) {
+    return Object.keys(object).find((key) => object[key] === value);
+  }
 
   return {
-    toAWSDateFormat,
+    dictFindKeyByValue,
+    homeText,
+    setHomeText,
     showAlertBoxFull,
     showAlertBox,
     setShowAlertBox,

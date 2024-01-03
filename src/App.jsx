@@ -114,5 +114,3 @@ export default function App() {
     </Authenticator>
   );
 }
-
-//export default withAuthenticator(App, components.Authenticator);

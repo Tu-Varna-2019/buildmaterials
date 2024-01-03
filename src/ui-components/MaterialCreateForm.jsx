@@ -21,8 +21,8 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { listMaterialTypes, listSales } from "../graphql/queries";
-import { createMaterial, updateSales } from "../graphql/mutations";
+import { listMaterialTypes } from "../graphql/queries";
+import { createMaterial } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
   items = [],
@@ -194,7 +194,6 @@ export default function MaterialCreateForm(props) {
     name: "",
     quantityAvailable: "",
     price: "",
-    Sales: [],
     materialtypeID: undefined,
   };
   const [name, setName] = React.useState(initialValues.name);
@@ -202,9 +201,6 @@ export default function MaterialCreateForm(props) {
     initialValues.quantityAvailable
   );
   const [price, setPrice] = React.useState(initialValues.price);
-  const [Sales, setSales] = React.useState(initialValues.Sales);
-  const [SalesLoading, setSalesLoading] = React.useState(false);
-  const [salesRecords, setSalesRecords] = React.useState([]);
   const [materialtypeID, setMaterialtypeID] = React.useState(
     initialValues.materialtypeID
   );
@@ -219,18 +215,11 @@ export default function MaterialCreateForm(props) {
     setName(initialValues.name);
     setQuantityAvailable(initialValues.quantityAvailable);
     setPrice(initialValues.price);
-    setSales(initialValues.Sales);
-    setCurrentSalesValue(undefined);
-    setCurrentSalesDisplayValue("");
     setMaterialtypeID(initialValues.materialtypeID);
     setCurrentMaterialtypeIDValue(undefined);
     setCurrentMaterialtypeIDDisplayValue("");
     setErrors({});
   };
-  const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
-    React.useState("");
-  const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
-  const SalesRef = React.createRef();
   const [
     currentMaterialtypeIDDisplayValue,
     setCurrentMaterialtypeIDDisplayValue,
@@ -238,23 +227,19 @@ export default function MaterialCreateForm(props) {
   const [currentMaterialtypeIDValue, setCurrentMaterialtypeIDValue] =
     React.useState(undefined);
   const materialtypeIDRef = React.createRef();
-  const getIDValue = {
-    Sales: (r) => JSON.stringify({ id: r?.id }),
-  };
-  const SalesIdSet = new Set(
-    Array.isArray(Sales)
-      ? Sales.map((r) => getIDValue.Sales?.(r))
-      : getIDValue.Sales?.(Sales)
-  );
   const getDisplayValue = {
-    Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
     materialtypeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
-    name: [],
-    quantityAvailable: [],
+    name: [{ type: "Required" }],
+    quantityAvailable: [
+      {
+        type: "GreaterThanNum",
+        numValues: [-1],
+        validationMessage: "Quantity must be a positive number",
+      },
+    ],
     price: [],
-    Sales: [],
     materialtypeID: [{ type: "Required" }],
   };
   const runValidationTasks = async (
@@ -273,38 +258,6 @@ export default function MaterialCreateForm(props) {
     }
     setErrors((errors) => ({ ...errors, [fieldName]: validationResponse }));
     return validationResponse;
-  };
-  const fetchSalesRecords = async (value) => {
-    setSalesLoading(true);
-    const newOptions = [];
-    let newNext = "";
-    while (newOptions.length < autocompleteLength && newNext != null) {
-      const variables = {
-        limit: autocompleteLength * 5,
-        filter: {
-          or: [
-            { quantitySold: { contains: value } },
-            { id: { contains: value } },
-          ],
-        },
-      };
-      if (newNext) {
-        variables["nextToken"] = newNext;
-      }
-      const result = (
-        await client.graphql({
-          query: listSales.replaceAll("__typename", ""),
-          variables,
-        })
-      )?.data?.listSales?.items;
-      var loaded = result.filter(
-        (item) => !SalesIdSet.has(getIDValue.Sales?.(item))
-      );
-      newOptions.push(...loaded);
-      newNext = result.nextToken;
-    }
-    setSalesRecords(newOptions.slice(0, autocompleteLength));
-    setSalesLoading(false);
   };
   const fetchMaterialtypeIDRecords = async (value) => {
     setMaterialtypeIDLoading(true);
@@ -334,7 +287,6 @@ export default function MaterialCreateForm(props) {
     setMaterialtypeIDLoading(false);
   };
   React.useEffect(() => {
-    fetchSalesRecords("");
     fetchMaterialtypeIDRecords("");
   }, []);
   return (
@@ -349,7 +301,6 @@ export default function MaterialCreateForm(props) {
           name,
           quantityAvailable,
           price,
-          Sales,
           materialtypeID,
         };
         const validationResponses = await Promise.all(
@@ -357,21 +308,13 @@ export default function MaterialCreateForm(props) {
             if (Array.isArray(modelFields[fieldName])) {
               promises.push(
                 ...modelFields[fieldName].map((item) =>
-                  runValidationTasks(
-                    fieldName,
-                    item,
-                    getDisplayValue[fieldName]
-                  )
+                  runValidationTasks(fieldName, item)
                 )
               );
               return promises;
             }
             promises.push(
-              runValidationTasks(
-                fieldName,
-                modelFields[fieldName],
-                getDisplayValue[fieldName]
-              )
+              runValidationTasks(fieldName, modelFields[fieldName])
             );
             return promises;
           }, [])
@@ -388,40 +331,14 @@ export default function MaterialCreateForm(props) {
               modelFields[key] = null;
             }
           });
-          const modelFieldsToSave = {
-            name: modelFields.name,
-            quantityAvailable: modelFields.quantityAvailable,
-            price: modelFields.price,
-            materialtypeID: modelFields.materialtypeID,
-          };
-          const material = (
-            await client.graphql({
-              query: createMaterial.replaceAll("__typename", ""),
-              variables: {
-                input: {
-                  ...modelFieldsToSave,
-                },
+          await client.graphql({
+            query: createMaterial.replaceAll("__typename", ""),
+            variables: {
+              input: {
+                ...modelFields,
               },
-            })
-          )?.data?.createMaterial;
-          const promises = [];
-          promises.push(
-            ...Sales.reduce((promises, original) => {
-              promises.push(
-                client.graphql({
-                  query: updateSales.replaceAll("__typename", ""),
-                  variables: {
-                    input: {
-                      id: original.id,
-                      materialID: material.id,
-                    },
-                  },
-                })
-              );
-              return promises;
-            }, [])
-          );
-          await Promise.all(promises);
+            },
+          });
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -439,8 +356,13 @@ export default function MaterialCreateForm(props) {
       {...rest}
     >
       <TextField
-        label="Name"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Name</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         value={name}
         onChange={(e) => {
@@ -450,7 +372,6 @@ export default function MaterialCreateForm(props) {
               name: value,
               quantityAvailable,
               price,
-              Sales,
               materialtypeID,
             };
             const result = onChange(modelFields);
@@ -482,7 +403,6 @@ export default function MaterialCreateForm(props) {
               name,
               quantityAvailable: value,
               price,
-              Sales,
               materialtypeID,
             };
             const result = onChange(modelFields);
@@ -516,7 +436,6 @@ export default function MaterialCreateForm(props) {
               name,
               quantityAvailable,
               price: value,
-              Sales,
               materialtypeID,
             };
             const result = onChange(modelFields);
@@ -533,86 +452,6 @@ export default function MaterialCreateForm(props) {
         {...getOverrideProps(overrides, "price")}
       ></TextField>
       <ArrayField
-        onChange={async (items) => {
-          let values = items;
-          if (onChange) {
-            const modelFields = {
-              name,
-              quantityAvailable,
-              price,
-              Sales: values,
-              materialtypeID,
-            };
-            const result = onChange(modelFields);
-            values = result?.Sales ?? values;
-          }
-          setSales(values);
-          setCurrentSalesValue(undefined);
-          setCurrentSalesDisplayValue("");
-        }}
-        currentFieldValue={currentSalesValue}
-        label={"Sales"}
-        items={Sales}
-        hasError={errors?.Sales?.hasError}
-        runValidationTasks={async () =>
-          await runValidationTasks("Sales", currentSalesValue)
-        }
-        errorMessage={errors?.Sales?.errorMessage}
-        getBadgeText={getDisplayValue.Sales}
-        setFieldValue={(model) => {
-          setCurrentSalesDisplayValue(
-            model ? getDisplayValue.Sales(model) : ""
-          );
-          setCurrentSalesValue(model);
-        }}
-        inputFieldRef={SalesRef}
-        defaultFieldValue={""}
-      >
-        <Autocomplete
-          label="Sales"
-          isRequired={false}
-          isReadOnly={false}
-          placeholder="Search Sales"
-          value={currentSalesDisplayValue}
-          options={salesRecords
-            .filter((r) => !SalesIdSet.has(getIDValue.Sales?.(r)))
-            .map((r) => ({
-              id: getIDValue.Sales?.(r),
-              label: getDisplayValue.Sales?.(r),
-            }))}
-          isLoading={SalesLoading}
-          onSelect={({ id, label }) => {
-            setCurrentSalesValue(
-              salesRecords.find((r) =>
-                Object.entries(JSON.parse(id)).every(
-                  ([key, value]) => r[key] === value
-                )
-              )
-            );
-            setCurrentSalesDisplayValue(label);
-            runValidationTasks("Sales", label);
-          }}
-          onClear={() => {
-            setCurrentSalesDisplayValue("");
-          }}
-          onChange={(e) => {
-            let { value } = e.target;
-            fetchSalesRecords(value);
-            if (errors.Sales?.hasError) {
-              runValidationTasks("Sales", value);
-            }
-            setCurrentSalesDisplayValue(value);
-            setCurrentSalesValue(undefined);
-          }}
-          onBlur={() => runValidationTasks("Sales", currentSalesDisplayValue)}
-          errorMessage={errors.Sales?.errorMessage}
-          hasError={errors.Sales?.hasError}
-          ref={SalesRef}
-          labelHidden={true}
-          {...getOverrideProps(overrides, "Sales")}
-        ></Autocomplete>
-      </ArrayField>
-      <ArrayField
         lengthLimit={1}
         onChange={async (items) => {
           let value = items[0];
@@ -621,7 +460,6 @@ export default function MaterialCreateForm(props) {
               name,
               quantityAvailable,
               price,
-              Sales,
               materialtypeID: value,
             };
             const result = onChange(modelFields);
@@ -631,7 +469,12 @@ export default function MaterialCreateForm(props) {
           setCurrentMaterialtypeIDValue(undefined);
         }}
         currentFieldValue={currentMaterialtypeIDValue}
-        label={"Materialtype id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Materialtype id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={materialtypeID ? [materialtypeID] : []}
         hasError={errors?.materialtypeID?.hasError}
         runValidationTasks={async () =>
@@ -667,7 +510,12 @@ export default function MaterialCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Materialtype id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Materialtype id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search MaterialType"
@@ -709,6 +557,10 @@ export default function MaterialCreateForm(props) {
           {...getOverrideProps(overrides, "materialtypeID")}
         ></Autocomplete>
       </ArrayField>
+      <Divider
+        orientation="horizontal"
+        {...getOverrideProps(overrides, "SectionalElement0")}
+      ></Divider>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}

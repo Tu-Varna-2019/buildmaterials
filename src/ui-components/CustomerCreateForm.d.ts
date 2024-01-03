@@ -26,7 +26,6 @@ export declare type CustomerCreateFormInputValues = {
     phone?: string;
     invoiceStatus?: boolean;
     bulstat?: string;
-    Sales?: any[];
     companyID?: string;
 };
 export declare type CustomerCreateFormValidationValues = {
@@ -34,7 +33,6 @@ export declare type CustomerCreateFormValidationValues = {
     phone?: ValidationFunction<string>;
     invoiceStatus?: ValidationFunction<boolean>;
     bulstat?: ValidationFunction<string>;
-    Sales?: ValidationFunction<any>;
     companyID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
@@ -44,7 +42,6 @@ export declare type CustomerCreateFormOverridesProps = {
     phone?: PrimitiveOverrideProps<TextFieldProps>;
     invoiceStatus?: PrimitiveOverrideProps<SwitchFieldProps>;
     bulstat?: PrimitiveOverrideProps<TextFieldProps>;
-    Sales?: PrimitiveOverrideProps<AutocompleteProps>;
     companyID?: PrimitiveOverrideProps<AutocompleteProps>;
 } & EscapeHatchProps;
 export declare type CustomerCreateFormProps = React.PropsWithChildren<{

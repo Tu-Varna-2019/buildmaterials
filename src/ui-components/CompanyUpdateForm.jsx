@@ -15,6 +15,7 @@ import {
   Grid,
   Icon,
   ScrollView,
+  SelectField,
   Text,
   TextField,
   useTheme,
@@ -186,6 +187,7 @@ export default function CompanyUpdateForm(props) {
     onSuccess,
     onError,
     onSubmit,
+    onCancel,
     onValidate,
     onChange,
     overrides,
@@ -194,11 +196,13 @@ export default function CompanyUpdateForm(props) {
   const initialValues = {
     name: "",
     Customers: [],
+    items: "",
   };
   const [name, setName] = React.useState(initialValues.name);
   const [Customers, setCustomers] = React.useState(initialValues.Customers);
   const [CustomersLoading, setCustomersLoading] = React.useState(false);
   const [customersRecords, setCustomersRecords] = React.useState([]);
+  const [items, setItems] = React.useState(initialValues.items);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
@@ -209,6 +213,7 @@ export default function CompanyUpdateForm(props) {
     setCustomers(cleanValues.Customers ?? []);
     setCurrentCustomersValue(undefined);
     setCurrentCustomersDisplayValue("");
+    setItems(cleanValues.items);
     setErrors({});
   };
   const [companyRecord, setCompanyRecord] = React.useState(companyModelProp);
@@ -250,6 +255,7 @@ export default function CompanyUpdateForm(props) {
   const validations = {
     name: [],
     Customers: [],
+    items: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -311,6 +317,7 @@ export default function CompanyUpdateForm(props) {
         let modelFields = {
           name: name ?? null,
           Customers: Customers ?? null,
+          items: items ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -437,6 +444,7 @@ export default function CompanyUpdateForm(props) {
             const modelFields = {
               name: value,
               Customers,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -458,6 +466,7 @@ export default function CompanyUpdateForm(props) {
             const modelFields = {
               name,
               Customers: values,
+              items,
             };
             const result = onChange(modelFields);
             values = result?.Customers ?? values;
@@ -530,24 +539,47 @@ export default function CompanyUpdateForm(props) {
           {...getOverrideProps(overrides, "Customers")}
         ></Autocomplete>
       </ArrayField>
+      <SelectField
+        label="Company"
+        placeholder=" "
+        value={items}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              name,
+              Customers,
+              items: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.items ?? value;
+          }
+          if (errors.items?.hasError) {
+            runValidationTasks("items", value);
+          }
+          setItems(value);
+        }}
+        onBlur={() => runValidationTasks("items", items)}
+        errorMessage={errors.items?.errorMessage}
+        hasError={errors.items?.hasError}
+        {...getOverrideProps(overrides, "items")}
+      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}
       >
-        <Button
-          children="Reset"
-          type="reset"
-          onClick={(event) => {
-            event.preventDefault();
-            resetStateValues();
-          }}
-          isDisabled={!(idProp || companyModelProp)}
-          {...getOverrideProps(overrides, "ResetButton")}
-        ></Button>
         <Flex
           gap="15px"
           {...getOverrideProps(overrides, "RightAlignCTASubFlex")}
         >
+          <Button
+            children="Delete"
+            type="button"
+            onClick={() => {
+              onCancel && onCancel();
+            }}
+            {...getOverrideProps(overrides, "CancelButton")}
+          ></Button>
           <Button
             children="Submit"
             type="submit"

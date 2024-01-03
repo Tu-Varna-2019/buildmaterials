@@ -1,6 +1,9 @@
 import React from "react";
 import { HomeComponent } from "../../classes/components/homeComponent";
-import { DataModelContext } from "../../contexts/data_models/context";
+import {
+  DataModelContext,
+  HelpersContext,
+} from "../../contexts/data_models/context";
 
 export function FuncHomeOverride() {
   const {
@@ -13,8 +16,12 @@ export function FuncHomeOverride() {
   } = HomeComponent();
 
   const { EmployeeObject } = React.useContext(DataModelContext);
+  const { UtilsObject } = React.useContext(HelpersContext);
 
   const homeOverride = {
+    text_page: {
+      children: UtilsObject.homeText,
+    },
     text_name: {
       children: EmployeeObject.name,
     },
@@ -40,7 +47,6 @@ export function FuncHomeOverride() {
     },
 
     button_logout: {
-      variation: "link",
       onClick: (event) => handleLogOutClick(event),
     },
   };

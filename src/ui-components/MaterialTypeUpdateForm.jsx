@@ -15,6 +15,7 @@ import {
   Grid,
   Icon,
   ScrollView,
+  SelectField,
   Text,
   TextField,
   useTheme,
@@ -186,6 +187,7 @@ export default function MaterialTypeUpdateForm(props) {
     onSuccess,
     onError,
     onSubmit,
+    onCancel,
     onValidate,
     onChange,
     overrides,
@@ -194,11 +196,13 @@ export default function MaterialTypeUpdateForm(props) {
   const initialValues = {
     name: "",
     Materials: [],
+    items: "",
   };
   const [name, setName] = React.useState(initialValues.name);
   const [Materials, setMaterials] = React.useState(initialValues.Materials);
   const [MaterialsLoading, setMaterialsLoading] = React.useState(false);
   const [materialsRecords, setMaterialsRecords] = React.useState([]);
+  const [items, setItems] = React.useState(initialValues.items);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
@@ -209,6 +213,7 @@ export default function MaterialTypeUpdateForm(props) {
     setMaterials(cleanValues.Materials ?? []);
     setCurrentMaterialsValue(undefined);
     setCurrentMaterialsDisplayValue("");
+    setItems(cleanValues.items);
     setErrors({});
   };
   const [materialTypeRecord, setMaterialTypeRecord] = React.useState(
@@ -252,6 +257,7 @@ export default function MaterialTypeUpdateForm(props) {
   const validations = {
     name: [],
     Materials: [],
+    items: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -313,6 +319,7 @@ export default function MaterialTypeUpdateForm(props) {
         let modelFields = {
           name: name ?? null,
           Materials: Materials ?? null,
+          items: items ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -439,6 +446,7 @@ export default function MaterialTypeUpdateForm(props) {
             const modelFields = {
               name: value,
               Materials,
+              items,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -460,6 +468,7 @@ export default function MaterialTypeUpdateForm(props) {
             const modelFields = {
               name,
               Materials: values,
+              items,
             };
             const result = onChange(modelFields);
             values = result?.Materials ?? values;
@@ -532,24 +541,47 @@ export default function MaterialTypeUpdateForm(props) {
           {...getOverrideProps(overrides, "Materials")}
         ></Autocomplete>
       </ArrayField>
+      <SelectField
+        label="Material types"
+        placeholder=" "
+        value={items}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              name,
+              Materials,
+              items: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.items ?? value;
+          }
+          if (errors.items?.hasError) {
+            runValidationTasks("items", value);
+          }
+          setItems(value);
+        }}
+        onBlur={() => runValidationTasks("items", items)}
+        errorMessage={errors.items?.errorMessage}
+        hasError={errors.items?.hasError}
+        {...getOverrideProps(overrides, "items")}
+      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}
       >
-        <Button
-          children="Reset"
-          type="reset"
-          onClick={(event) => {
-            event.preventDefault();
-            resetStateValues();
-          }}
-          isDisabled={!(idProp || materialTypeModelProp)}
-          {...getOverrideProps(overrides, "ResetButton")}
-        ></Button>
         <Flex
           gap="15px"
           {...getOverrideProps(overrides, "RightAlignCTASubFlex")}
         >
+          <Button
+            children="Delete"
+            type="button"
+            onClick={() => {
+              onCancel && onCancel();
+            }}
+            {...getOverrideProps(overrides, "CancelButton")}
+          ></Button>
           <Button
             children="Submit"
             type="submit"

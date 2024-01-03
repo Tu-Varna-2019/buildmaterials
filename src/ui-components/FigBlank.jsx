@@ -26,12 +26,12 @@ export default function FigBlank(props) {
       {...rest}
     >
       <Button
-        width="349px"
-        height="77px"
+        width="174px"
+        height="45px"
         position="absolute"
-        top="591px"
-        left="calc(50% - 173.5px - 1.5px)"
-        backgroundColor="rgba(33,45,80,1)"
+        top="639px"
+        left="calc(50% - 86px - 853px)"
+        backgroundColor="rgba(33,45,80,0.78)"
         size="default"
         isDisabled={false}
         variation="default"

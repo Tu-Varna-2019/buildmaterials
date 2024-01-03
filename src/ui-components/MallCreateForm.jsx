@@ -224,7 +224,7 @@ export default function MallCreateForm(props) {
     Employees: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
-    name: [],
+    name: [{ type: "Required" }],
     Employees: [],
   };
   const runValidationTasks = async (
@@ -372,8 +372,13 @@ export default function MallCreateForm(props) {
       {...rest}
     >
       <TextField
-        label="Name"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Name</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         value={name}
         onChange={(e) => {

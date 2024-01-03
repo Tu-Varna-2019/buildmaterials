@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { AutocompleteProps, GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { AutocompleteProps, GridProps, SelectFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -25,15 +25,15 @@ export declare type MaterialUpdateFormInputValues = {
     name?: string;
     quantityAvailable?: number;
     price?: number;
-    Sales?: any[];
     materialtypeID?: string;
+    items?: string;
 };
 export declare type MaterialUpdateFormValidationValues = {
     name?: ValidationFunction<string>;
     quantityAvailable?: ValidationFunction<number>;
     price?: ValidationFunction<number>;
-    Sales?: ValidationFunction<any>;
     materialtypeID?: ValidationFunction<string>;
+    items?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type MaterialUpdateFormOverridesProps = {
@@ -41,8 +41,8 @@ export declare type MaterialUpdateFormOverridesProps = {
     name?: PrimitiveOverrideProps<TextFieldProps>;
     quantityAvailable?: PrimitiveOverrideProps<TextFieldProps>;
     price?: PrimitiveOverrideProps<TextFieldProps>;
-    Sales?: PrimitiveOverrideProps<AutocompleteProps>;
     materialtypeID?: PrimitiveOverrideProps<AutocompleteProps>;
+    items?: PrimitiveOverrideProps<SelectFieldProps>;
 } & EscapeHatchProps;
 export declare type MaterialUpdateFormProps = React.PropsWithChildren<{
     overrides?: MaterialUpdateFormOverridesProps | undefined | null;
@@ -52,6 +52,7 @@ export declare type MaterialUpdateFormProps = React.PropsWithChildren<{
     onSubmit?: (fields: MaterialUpdateFormInputValues) => MaterialUpdateFormInputValues;
     onSuccess?: (fields: MaterialUpdateFormInputValues) => void;
     onError?: (fields: MaterialUpdateFormInputValues, errorMessage: string) => void;
+    onCancel?: () => void;
     onChange?: (fields: MaterialUpdateFormInputValues) => MaterialUpdateFormInputValues;
     onValidate?: MaterialUpdateFormValidationValues;
 } & React.CSSProperties>;

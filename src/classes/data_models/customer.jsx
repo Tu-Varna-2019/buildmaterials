@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { HelpersContext } from "../../contexts/data_models/context";
 import { listCustomers } from "../../graphql/queries";
+import { deleteCustomer } from "../../graphql/mutations";
 
 export function Customer() {
   const [cID, setCID] = useState("");
@@ -10,6 +11,8 @@ export function Customer() {
   const [bulstat, setBulstat] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [allCustomerIDNames, setAllCustomerIDNames] = useState({});
+
+  const [selectedCustomerID, setSelectedCustomerID] = useState("");
 
   const { UtilsObject } = React.useContext(HelpersContext);
   const { logger, client } = UtilsObject;
@@ -51,7 +54,25 @@ export function Customer() {
     setCompanyName(event.target.value);
   };
 
+  const deleteSelectedCustomer = async () => {
+    try {
+      await client.graphql({
+        query: deleteCustomer,
+        variables: {
+          input: {
+            id: selectedCustomerID,
+          },
+        },
+      });
+    } catch (error) {
+      logger.error(error);
+    }
+  };
+
   return {
+    deleteSelectedCustomer,
+    selectedCustomerID,
+    setSelectedCustomerID,
     cID,
     setCID,
     name,

@@ -22,8 +22,8 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { listCompanies, listSales } from "../graphql/queries";
-import { createCustomer, updateSales } from "../graphql/mutations";
+import { listCompanies } from "../graphql/queries";
+import { createCustomer } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
   items = [],
@@ -196,7 +196,6 @@ export default function CustomerCreateForm(props) {
     phone: "",
     invoiceStatus: false,
     bulstat: "",
-    Sales: [],
     companyID: undefined,
   };
   const [name, setName] = React.useState(initialValues.name);
@@ -205,9 +204,6 @@ export default function CustomerCreateForm(props) {
     initialValues.invoiceStatus
   );
   const [bulstat, setBulstat] = React.useState(initialValues.bulstat);
-  const [Sales, setSales] = React.useState(initialValues.Sales);
-  const [SalesLoading, setSalesLoading] = React.useState(false);
-  const [salesRecords, setSalesRecords] = React.useState([]);
   const [companyID, setCompanyID] = React.useState(initialValues.companyID);
   const [companyIDLoading, setCompanyIDLoading] = React.useState(false);
   const [companyIDRecords, setCompanyIDRecords] = React.useState([]);
@@ -220,41 +216,24 @@ export default function CustomerCreateForm(props) {
     setPhone(initialValues.phone);
     setInvoiceStatus(initialValues.invoiceStatus);
     setBulstat(initialValues.bulstat);
-    setSales(initialValues.Sales);
-    setCurrentSalesValue(undefined);
-    setCurrentSalesDisplayValue("");
     setCompanyID(initialValues.companyID);
     setCurrentCompanyIDValue(undefined);
     setCurrentCompanyIDDisplayValue("");
     setErrors({});
   };
-  const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
-    React.useState("");
-  const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
-  const SalesRef = React.createRef();
   const [currentCompanyIDDisplayValue, setCurrentCompanyIDDisplayValue] =
     React.useState("");
   const [currentCompanyIDValue, setCurrentCompanyIDValue] =
     React.useState(undefined);
   const companyIDRef = React.createRef();
-  const getIDValue = {
-    Sales: (r) => JSON.stringify({ id: r?.id }),
-  };
-  const SalesIdSet = new Set(
-    Array.isArray(Sales)
-      ? Sales.map((r) => getIDValue.Sales?.(r))
-      : getIDValue.Sales?.(Sales)
-  );
   const getDisplayValue = {
-    Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
     companyID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
-    name: [],
+    name: [{ type: "Required" }],
     phone: [{ type: "Phone" }],
     invoiceStatus: [],
-    bulstat: [],
-    Sales: [],
+    bulstat: [{ type: "Required" }],
     companyID: [{ type: "Required" }],
   };
   const runValidationTasks = async (
@@ -273,38 +252,6 @@ export default function CustomerCreateForm(props) {
     }
     setErrors((errors) => ({ ...errors, [fieldName]: validationResponse }));
     return validationResponse;
-  };
-  const fetchSalesRecords = async (value) => {
-    setSalesLoading(true);
-    const newOptions = [];
-    let newNext = "";
-    while (newOptions.length < autocompleteLength && newNext != null) {
-      const variables = {
-        limit: autocompleteLength * 5,
-        filter: {
-          or: [
-            { quantitySold: { contains: value } },
-            { id: { contains: value } },
-          ],
-        },
-      };
-      if (newNext) {
-        variables["nextToken"] = newNext;
-      }
-      const result = (
-        await client.graphql({
-          query: listSales.replaceAll("__typename", ""),
-          variables,
-        })
-      )?.data?.listSales?.items;
-      var loaded = result.filter(
-        (item) => !SalesIdSet.has(getIDValue.Sales?.(item))
-      );
-      newOptions.push(...loaded);
-      newNext = result.nextToken;
-    }
-    setSalesRecords(newOptions.slice(0, autocompleteLength));
-    setSalesLoading(false);
   };
   const fetchCompanyIDRecords = async (value) => {
     setCompanyIDLoading(true);
@@ -334,7 +281,6 @@ export default function CustomerCreateForm(props) {
     setCompanyIDLoading(false);
   };
   React.useEffect(() => {
-    fetchSalesRecords("");
     fetchCompanyIDRecords("");
   }, []);
   return (
@@ -350,7 +296,6 @@ export default function CustomerCreateForm(props) {
           phone,
           invoiceStatus,
           bulstat,
-          Sales,
           companyID,
         };
         const validationResponses = await Promise.all(
@@ -358,21 +303,13 @@ export default function CustomerCreateForm(props) {
             if (Array.isArray(modelFields[fieldName])) {
               promises.push(
                 ...modelFields[fieldName].map((item) =>
-                  runValidationTasks(
-                    fieldName,
-                    item,
-                    getDisplayValue[fieldName]
-                  )
+                  runValidationTasks(fieldName, item)
                 )
               );
               return promises;
             }
             promises.push(
-              runValidationTasks(
-                fieldName,
-                modelFields[fieldName],
-                getDisplayValue[fieldName]
-              )
+              runValidationTasks(fieldName, modelFields[fieldName])
             );
             return promises;
           }, [])
@@ -389,41 +326,14 @@ export default function CustomerCreateForm(props) {
               modelFields[key] = null;
             }
           });
-          const modelFieldsToSave = {
-            name: modelFields.name,
-            phone: modelFields.phone,
-            invoiceStatus: modelFields.invoiceStatus,
-            bulstat: modelFields.bulstat,
-            companyID: modelFields.companyID,
-          };
-          const customer = (
-            await client.graphql({
-              query: createCustomer.replaceAll("__typename", ""),
-              variables: {
-                input: {
-                  ...modelFieldsToSave,
-                },
+          await client.graphql({
+            query: createCustomer.replaceAll("__typename", ""),
+            variables: {
+              input: {
+                ...modelFields,
               },
-            })
-          )?.data?.createCustomer;
-          const promises = [];
-          promises.push(
-            ...Sales.reduce((promises, original) => {
-              promises.push(
-                client.graphql({
-                  query: updateSales.replaceAll("__typename", ""),
-                  variables: {
-                    input: {
-                      id: original.id,
-                      customerID: customer.id,
-                    },
-                  },
-                })
-              );
-              return promises;
-            }, [])
-          );
-          await Promise.all(promises);
+            },
+          });
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -441,8 +351,13 @@ export default function CustomerCreateForm(props) {
       {...rest}
     >
       <TextField
-        label="Name"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Name</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         value={name}
         onChange={(e) => {
@@ -453,7 +368,6 @@ export default function CustomerCreateForm(props) {
               phone,
               invoiceStatus,
               bulstat,
-              Sales,
               companyID,
             };
             const result = onChange(modelFields);
@@ -483,7 +397,6 @@ export default function CustomerCreateForm(props) {
               phone: value,
               invoiceStatus,
               bulstat,
-              Sales,
               companyID,
             };
             const result = onChange(modelFields);
@@ -512,7 +425,6 @@ export default function CustomerCreateForm(props) {
               phone,
               invoiceStatus: value,
               bulstat,
-              Sales,
               companyID,
             };
             const result = onChange(modelFields);
@@ -529,8 +441,13 @@ export default function CustomerCreateForm(props) {
         {...getOverrideProps(overrides, "invoiceStatus")}
       ></SwitchField>
       <TextField
-        label="Bulstat"
-        isRequired={false}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Bulstat</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
+        isRequired={true}
         isReadOnly={false}
         value={bulstat}
         onChange={(e) => {
@@ -541,7 +458,6 @@ export default function CustomerCreateForm(props) {
               phone,
               invoiceStatus,
               bulstat: value,
-              Sales,
               companyID,
             };
             const result = onChange(modelFields);
@@ -558,87 +474,6 @@ export default function CustomerCreateForm(props) {
         {...getOverrideProps(overrides, "bulstat")}
       ></TextField>
       <ArrayField
-        onChange={async (items) => {
-          let values = items;
-          if (onChange) {
-            const modelFields = {
-              name,
-              phone,
-              invoiceStatus,
-              bulstat,
-              Sales: values,
-              companyID,
-            };
-            const result = onChange(modelFields);
-            values = result?.Sales ?? values;
-          }
-          setSales(values);
-          setCurrentSalesValue(undefined);
-          setCurrentSalesDisplayValue("");
-        }}
-        currentFieldValue={currentSalesValue}
-        label={"Sales"}
-        items={Sales}
-        hasError={errors?.Sales?.hasError}
-        runValidationTasks={async () =>
-          await runValidationTasks("Sales", currentSalesValue)
-        }
-        errorMessage={errors?.Sales?.errorMessage}
-        getBadgeText={getDisplayValue.Sales}
-        setFieldValue={(model) => {
-          setCurrentSalesDisplayValue(
-            model ? getDisplayValue.Sales(model) : ""
-          );
-          setCurrentSalesValue(model);
-        }}
-        inputFieldRef={SalesRef}
-        defaultFieldValue={""}
-      >
-        <Autocomplete
-          label="Sales"
-          isRequired={false}
-          isReadOnly={false}
-          placeholder="Search Sales"
-          value={currentSalesDisplayValue}
-          options={salesRecords
-            .filter((r) => !SalesIdSet.has(getIDValue.Sales?.(r)))
-            .map((r) => ({
-              id: getIDValue.Sales?.(r),
-              label: getDisplayValue.Sales?.(r),
-            }))}
-          isLoading={SalesLoading}
-          onSelect={({ id, label }) => {
-            setCurrentSalesValue(
-              salesRecords.find((r) =>
-                Object.entries(JSON.parse(id)).every(
-                  ([key, value]) => r[key] === value
-                )
-              )
-            );
-            setCurrentSalesDisplayValue(label);
-            runValidationTasks("Sales", label);
-          }}
-          onClear={() => {
-            setCurrentSalesDisplayValue("");
-          }}
-          onChange={(e) => {
-            let { value } = e.target;
-            fetchSalesRecords(value);
-            if (errors.Sales?.hasError) {
-              runValidationTasks("Sales", value);
-            }
-            setCurrentSalesDisplayValue(value);
-            setCurrentSalesValue(undefined);
-          }}
-          onBlur={() => runValidationTasks("Sales", currentSalesDisplayValue)}
-          errorMessage={errors.Sales?.errorMessage}
-          hasError={errors.Sales?.hasError}
-          ref={SalesRef}
-          labelHidden={true}
-          {...getOverrideProps(overrides, "Sales")}
-        ></Autocomplete>
-      </ArrayField>
-      <ArrayField
         lengthLimit={1}
         onChange={async (items) => {
           let value = items[0];
@@ -648,7 +483,6 @@ export default function CustomerCreateForm(props) {
               phone,
               invoiceStatus,
               bulstat,
-              Sales,
               companyID: value,
             };
             const result = onChange(modelFields);
@@ -658,7 +492,12 @@ export default function CustomerCreateForm(props) {
           setCurrentCompanyIDValue(undefined);
         }}
         currentFieldValue={currentCompanyIDValue}
-        label={"Company id"}
+        label={
+          <span style={{ display: "inline-flex" }}>
+            <span>Company id</span>
+            <span style={{ color: "red" }}>*</span>
+          </span>
+        }
         items={companyID ? [companyID] : []}
         hasError={errors?.companyID?.hasError}
         runValidationTasks={async () =>
@@ -692,7 +531,12 @@ export default function CustomerCreateForm(props) {
         defaultFieldValue={""}
       >
         <Autocomplete
-          label="Company id"
+          label={
+            <span style={{ display: "inline-flex" }}>
+              <span>Company id</span>
+              <span style={{ color: "red" }}>*</span>
+            </span>
+          }
           isRequired={true}
           isReadOnly={false}
           placeholder="Search Company"
