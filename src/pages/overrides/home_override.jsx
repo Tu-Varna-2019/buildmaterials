@@ -8,9 +8,11 @@ import {
 export function FuncHomeOverride() {
   const {
     selectFieldCreateUpdateOptions,
+    selectFieldReport,
     handleSelectFieldUpdateOptions,
     selectFieldInquery,
     handleSelectFieldInqueryOptions,
+    handleSelectFieldReportOptions,
     handleSelectFieldCreateOptions,
     handleLogOutClick,
   } = HomeComponent();
@@ -41,9 +43,9 @@ export function FuncHomeOverride() {
       options: selectFieldInquery,
     },
     select_field_report: {
-      onChange: (event) => handleSelectFieldInqueryOptions(event),
+      onChange: (event) => handleSelectFieldReportOptions(event),
       style: { backgroundColor: "transparent", color: "transparent" },
-      options: selectFieldInquery,
+      options: selectFieldReport,
     },
 
     button_logout: {

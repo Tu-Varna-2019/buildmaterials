@@ -24,8 +24,19 @@ export function ComponentState() {
   const [showUpdateCompanyPage, setShowUpdateCompanyPage] = useState(false);
 
   // Output Table
+  const [reportSalesByEmployee, setReportSalesByEmployee] = useState(false);
+  const [reportCustomerPurchaseOptions, setReportCustomerPurchaseOptions] =
+    useState(false);
+  const [reportFinancialSumReport, setReportFinancialSumReport] =
+    useState(false);
 
   return {
+    reportFinancialSumReport,
+    setReportFinancialSumReport,
+    reportCustomerPurchaseOptions,
+    setReportCustomerPurchaseOptions,
+    reportSalesByEmployee,
+    setReportSalesByEmployee,
     showCreateMaterialPage,
     setShowCreateMaterialPage,
     showCreateMaterialTypePage,

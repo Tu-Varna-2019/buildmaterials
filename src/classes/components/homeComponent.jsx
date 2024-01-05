@@ -17,6 +17,11 @@ export function HomeComponent() {
     "Customer",
   ];
   const selectFieldInquery = ["add"];
+  const selectFieldReport = [
+    "Sales Report by Employee",
+    "Customer Purchase Options",
+    "Financial Sum Report",
+  ];
 
   const handleSelectFieldUpdateOptions = (event) => {
     switch (event.target.value) {
@@ -91,12 +96,30 @@ export function HomeComponent() {
     }
   };
 
+  const handleSelectFieldReportOptions = (event) => {
+    switch (event.target.value) {
+      case "Sales Report by Employee":
+        ComponentStateObject.setReportSalesByEmployee(true);
+        break;
+
+      case "Customer Purchase Options":
+        ComponentStateObject.setReportCustomerPurchaseOptions(true);
+        break;
+
+      case "Financial Sum Report":
+        ComponentStateObject.setReportFinancialSumReport(true);
+        break;
+    }
+  };
+
   // Buttons
   const handleLogOutClick = (event) => {
     signOut();
   };
 
   return {
+    selectFieldReport,
+    handleSelectFieldReportOptions,
     selectFieldCreateUpdateOptions,
     handleSelectFieldUpdateOptions,
     selectFieldInquery,

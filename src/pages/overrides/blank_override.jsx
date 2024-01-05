@@ -28,6 +28,11 @@ export function BlankOverride() {
       showUpdateMallPage: "Update Mall",
       showUpdateSalesPage: "Update Sales",
       showUpdateCompanyPage: "Update Company",
+      reportSalesByEmployee:
+        "Show items sold by a given employee for a given period sorted by type of item",
+      reportCustomerPurchaseOptions:
+        " Purchase history of individual customers",
+      reportFinancialSumReport: "Financial sum report for all sales",
     };
 
     const pageKeys = Object.keys(pageMapping);

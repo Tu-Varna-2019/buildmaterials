@@ -11,6 +11,7 @@ import FigBlank from "../../ui-components/FigBlank";
 import FigHome from "../../ui-components/FigHome";
 import { BlankOverride } from "../overrides/blank_override";
 import { FuncHomeOverride } from "../overrides/home_override";
+import { TableComponent } from "../../classes/components/tableComponent";
 
 export default function HomeLayout() {
   const { ComponentStateObject } = React.useContext(ComponentStateContext);
@@ -49,7 +50,11 @@ export default function HomeLayout() {
           ComponentStateObject.showUpdateCustomerPage ||
           ComponentStateObject.showUpdateMallPage ||
           ComponentStateObject.showUpdatePositionPage ||
-          ComponentStateObject.showUpdateSalesPage) && (
+          ComponentStateObject.showUpdateSalesPage ||
+          /*Report */
+          ComponentStateObject.reportSalesByEmployee ||
+          ComponentStateObject.reportCustomerPurchaseOptions ||
+          ComponentStateObject.reportFinancialSumReport) && (
           <View
             position="absolute"
             display="block"
@@ -103,6 +108,9 @@ export default function HomeLayout() {
                     />
                   )
               )}
+
+              {/*Report form */}
+              <TableComponent />
             </View>
           </View>
         )
