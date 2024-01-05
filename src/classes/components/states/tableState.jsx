@@ -8,15 +8,21 @@ import {
   getCustomer,
   getEmployee,
   getMaterial,
+  getMaterialType,
   getPosition,
+  listMaterials,
   listSales,
 } from "../../../graphql/queries";
 import {
+  ColumnAvailableMaterials,
   ColumnCustomerPurchase,
   ColumnFinancialSum,
+  ColumnPopularSoldMaterials,
   ColumnSalesByEmployee,
+  RowAvailableMaterials,
   RowCustomerPurchase,
   RowFinancialSum,
+  RowPopularSoldMaterials,
   RowSalesByEmployee,
 } from "../tableComponent";
 
@@ -167,6 +173,103 @@ export function TableState() {
     return result;
   };
 
+  const getAvailableMaterials = async () => {
+    /*
+    Get material type
+    Get material name
+    Get material quantity
+    Get material price
+    ------------------------
+    Sort by material type
+    */
+    let result = [];
+
+    try {
+      const responseMaterial = await client.graphql({
+        query: listMaterials,
+      });
+
+      const materialItems = responseMaterial.data.listMaterials.items;
+
+      for (const materialIndex in materialItems) {
+        const material = materialItems[materialIndex];
+
+        const respoonseMaterialTypes = await client.graphql({
+          query: getMaterialType,
+          variables: { id: material.materialtypeID },
+        });
+
+        result.push({
+          materialType: respoonseMaterialTypes.data.getMaterialType.name,
+          materialName: material.name,
+          materialQuantity: material.quantity,
+          materialPrice: material.price,
+        });
+      }
+    } catch (error) {
+      console.error("Error: ", error);
+    }
+
+    // Sort by material type
+    result.sort((a, b) => (a.materialType > b.materialType ? 1 : -1));
+
+    return result;
+  };
+
+  const getPopularSoldMaterials = async () => {
+    let materialSalesData = {};
+    let result = [];
+
+    try {
+      const responseSales = await client.graphql({
+        query: listSales,
+      });
+
+      const salesItems = responseSales.data.listSales.items;
+
+      // Aggregate sales data
+      salesItems.forEach((sale) => {
+        if (!materialSalesData[sale.materialID]) {
+          materialSalesData[sale.materialID] = {
+            totalQuantitySold: 0,
+            totalSalesValue: 0,
+          };
+        }
+        materialSalesData[sale.materialID].totalQuantitySold +=
+          sale.quantitySold;
+        materialSalesData[sale.materialID].totalSalesValue += sale.totalPrice;
+      });
+
+      // Fetch material details and format the result
+      for (const materialID in materialSalesData) {
+        const responseMaterial = await client.graphql({
+          query: getMaterial,
+          variables: { id: materialID },
+        });
+        const material = responseMaterial.data.getMaterial;
+
+        const responseMaterialType = await client.graphql({
+          query: getMaterialType,
+          variables: { id: material.materialtypeID },
+        });
+
+        result.push({
+          materialType: responseMaterialType.data.getMaterialType.name,
+          materialName: material.name,
+          totalQuantitySold: materialSalesData[materialID].totalQuantitySold,
+          totalSalesValue: materialSalesData[materialID].totalSalesValue,
+        });
+      }
+
+      // Sort by totalQuantitySold
+      result.sort((a, b) => b.totalQuantitySold - a.totalQuantitySold);
+    } catch (error) {
+      console.error("Error: ", error);
+    }
+
+    return result;
+  };
+
   const getTableResult = async () => {
     if (ComponentStateObject.reportSalesByEmployee) {
       const result = await getSalesByEmployee();
@@ -186,6 +289,18 @@ export function TableState() {
       const resultColumns = <ColumnFinancialSum result={result} />;
 
       return <RowFinancialSum outputColumns={resultColumns} />;
+    } else if (ComponentStateObject.reportAvailableMaterials) {
+      const result = await getAvailableMaterials();
+
+      const resultColumns = <ColumnAvailableMaterials result={result} />;
+
+      return <RowAvailableMaterials outputColumns={resultColumns} />;
+    } else if (ComponentStateObject.reportPopularSoldMaterials) {
+      const result = await getPopularSoldMaterials();
+
+      const resultColumns = <ColumnPopularSoldMaterials result={result} />;
+
+      return <RowPopularSoldMaterials outputColumns={resultColumns} />;
     }
   };
   return { getTableResult };

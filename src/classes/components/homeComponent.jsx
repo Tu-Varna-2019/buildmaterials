@@ -16,11 +16,14 @@ export function HomeComponent() {
     "Material",
     "Customer",
   ];
-  const selectFieldInquery = ["add"];
+
   const selectFieldReport = [
+    "",
     "Sales Report by Employee",
     "Customer Purchase Options",
     "Financial Sum Report",
+    "Available Materials",
+    "Popular Sold Materials",
   ];
 
   const handleSelectFieldUpdateOptions = (event) => {
@@ -91,7 +94,33 @@ export function HomeComponent() {
 
   const handleSelectFieldInqueryOptions = (event) => {
     switch (event.target.value) {
-      case "add":
+      case "Company":
+        ComponentStateObject.setShowCreateCompanyPage(true);
+        break;
+      case "MaterialType":
+        ComponentStateObject.setShowCreateMaterialTypePage(true);
+        break;
+      case "Mall":
+        ComponentStateObject.setShowCreateMallPage(true);
+        break;
+      case "Position":
+        ComponentStateObject.setShowCreatePositionPage(true);
+        break;
+      case "Employee":
+        ComponentStateObject.setShowCreateEmployeePage(true);
+        break;
+      case "Sales":
+        ComponentStateObject.setShowCreateSalesPage(true);
+        break;
+      case "Material":
+        ComponentStateObject.setShowCreateMaterialPage(true);
+        break;
+      case "Customer":
+        ComponentStateObject.setShowCreateCustomerPage(true);
+        break;
+
+      default:
+        console.log("Error: No option selected");
         break;
     }
   };
@@ -109,6 +138,14 @@ export function HomeComponent() {
       case "Financial Sum Report":
         ComponentStateObject.setReportFinancialSumReport(true);
         break;
+
+      case "Available Materials":
+        ComponentStateObject.setReportAvailableMaterials(true);
+        break;
+
+      case "Popular Sold Materials":
+        ComponentStateObject.setReportPopularSoldMaterials(true);
+        break;
     }
   };
 
@@ -122,7 +159,7 @@ export function HomeComponent() {
     handleSelectFieldReportOptions,
     selectFieldCreateUpdateOptions,
     handleSelectFieldUpdateOptions,
-    selectFieldInquery,
+
     handleSelectFieldInqueryOptions,
     handleSelectFieldCreateOptions,
     handleLogOutClick,

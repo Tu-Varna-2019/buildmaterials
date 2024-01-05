@@ -33,6 +33,8 @@ export function BlankOverride() {
       reportCustomerPurchaseOptions:
         " Purchase history of individual customers",
       reportFinancialSumReport: "Financial sum report for all sales",
+      reportAvailableMaterials: "Available materials",
+      reportPopularSoldMaterials: "Popular sold materials",
     };
 
     const pageKeys = Object.keys(pageMapping);

@@ -54,7 +54,9 @@ export default function HomeLayout() {
           /*Report */
           ComponentStateObject.reportSalesByEmployee ||
           ComponentStateObject.reportCustomerPurchaseOptions ||
-          ComponentStateObject.reportFinancialSumReport) && (
+          ComponentStateObject.reportFinancialSumReport ||
+          ComponentStateObject.reportAvailableMaterials ||
+          ComponentStateObject.reportPopularSoldMaterials) && (
           <View
             position="absolute"
             display="block"

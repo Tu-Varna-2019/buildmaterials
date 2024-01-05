@@ -29,8 +29,16 @@ export function ComponentState() {
     useState(false);
   const [reportFinancialSumReport, setReportFinancialSumReport] =
     useState(false);
+  const [reportAvailableMaterials, setReportAvailableMaterials] =
+    useState(false);
+  const [reportPopularSoldMaterials, setReportPopularSoldMaterials] =
+    useState(false);
 
   return {
+    reportPopularSoldMaterials,
+    setReportPopularSoldMaterials,
+    reportAvailableMaterials,
+    setReportAvailableMaterials,
     reportFinancialSumReport,
     setReportFinancialSumReport,
     reportCustomerPurchaseOptions,

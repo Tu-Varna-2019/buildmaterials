@@ -10,7 +10,6 @@ export function FuncHomeOverride() {
     selectFieldCreateUpdateOptions,
     selectFieldReport,
     handleSelectFieldUpdateOptions,
-    selectFieldInquery,
     handleSelectFieldInqueryOptions,
     handleSelectFieldReportOptions,
     handleSelectFieldCreateOptions,
@@ -39,8 +38,12 @@ export function FuncHomeOverride() {
     },
     select_field_query: {
       onChange: (event) => handleSelectFieldInqueryOptions(event),
-      style: { backgroundColor: "transparent", color: "transparent" },
-      options: selectFieldInquery,
+      style: {
+        backgroundColor: "transparent",
+        color: "transparent",
+        // display: "none",
+      },
+      options: selectFieldCreateUpdateOptions,
     },
     select_field_report: {
       onChange: (event) => handleSelectFieldReportOptions(event),

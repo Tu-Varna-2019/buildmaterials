@@ -9,13 +9,11 @@ import * as React from "react";
 import {
   Autocomplete,
   Badge,
-  Button,
   Divider,
   Flex,
   Grid,
   Icon,
   ScrollView,
-  SelectField,
   Text,
   TextField,
   useTheme,
@@ -26,8 +24,9 @@ import {
   getMaterial,
   getMaterialType,
   listMaterialTypes,
+  listSales,
 } from "../graphql/queries";
-import { updateMaterial } from "../graphql/mutations";
+import { updateMaterial, updateSales } from "../graphql/mutations";
 const client = generateClient();
 function ArrayField({
   items = [],
@@ -184,31 +183,35 @@ function ArrayField({
     </React.Fragment>
   );
 }
-export default function MaterialUpdateForm(props) {
+export default function MaterialSearch(props) {
   const {
     id: idProp,
     material: materialModelProp,
     onSuccess,
     onError,
     onSubmit,
-    onCancel,
     onValidate,
     onChange,
     overrides,
     ...rest
   } = props;
   const initialValues = {
+    items: undefined,
     name: "",
     quantityAvailable: "",
     price: "",
+    Sales: [],
     materialtypeID: undefined,
-    items: "",
   };
+  const [items, setItems] = React.useState(initialValues.items);
   const [name, setName] = React.useState(initialValues.name);
   const [quantityAvailable, setQuantityAvailable] = React.useState(
     initialValues.quantityAvailable
   );
   const [price, setPrice] = React.useState(initialValues.price);
+  const [Sales, setSales] = React.useState(initialValues.Sales);
+  const [SalesLoading, setSalesLoading] = React.useState(false);
+  const [salesRecords, setSalesRecords] = React.useState([]);
   const [materialtypeID, setMaterialtypeID] = React.useState(
     initialValues.materialtypeID
   );
@@ -217,23 +220,32 @@ export default function MaterialUpdateForm(props) {
   const [materialtypeIDRecords, setMaterialtypeIDRecords] = React.useState([]);
   const [selectedMaterialtypeIDRecords, setSelectedMaterialtypeIDRecords] =
     React.useState([]);
-  const [items, setItems] = React.useState(initialValues.items);
   const autocompleteLength = 10;
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = materialRecord
-      ? { ...initialValues, ...materialRecord, materialtypeID }
+      ? {
+          ...initialValues,
+          ...materialRecord,
+          Sales: linkedSales,
+          materialtypeID,
+        }
       : initialValues;
+    setItems(cleanValues.items);
     setName(cleanValues.name);
     setQuantityAvailable(cleanValues.quantityAvailable);
     setPrice(cleanValues.price);
+    setSales(cleanValues.Sales ?? []);
+    setCurrentSalesValue(undefined);
+    setCurrentSalesDisplayValue("");
     setMaterialtypeID(cleanValues.materialtypeID);
     setCurrentMaterialtypeIDValue(undefined);
     setCurrentMaterialtypeIDDisplayValue("");
-    setItems(cleanValues.items);
     setErrors({});
   };
   const [materialRecord, setMaterialRecord] = React.useState(materialModelProp);
+  const [linkedSales, setLinkedSales] = React.useState([]);
+  const canUnlinkSales = false;
   React.useEffect(() => {
     const queryData = async () => {
       const record = idProp
@@ -244,6 +256,8 @@ export default function MaterialUpdateForm(props) {
             })
           )?.data?.getMaterial
         : materialModelProp;
+      const linkedSales = record?.Sales?.items ?? [];
+      setLinkedSales(linkedSales);
       const materialtypeIDRecord = record ? record.materialtypeID : undefined;
       const materialTypeRecord = materialtypeIDRecord
         ? (
@@ -259,7 +273,15 @@ export default function MaterialUpdateForm(props) {
     };
     queryData();
   }, [idProp, materialModelProp]);
-  React.useEffect(resetStateValues, [materialRecord, materialtypeID]);
+  React.useEffect(resetStateValues, [
+    materialRecord,
+    linkedSales,
+    materialtypeID,
+  ]);
+  const [currentSalesDisplayValue, setCurrentSalesDisplayValue] =
+    React.useState("");
+  const [currentSalesValue, setCurrentSalesValue] = React.useState(undefined);
+  const SalesRef = React.createRef();
   const [
     currentMaterialtypeIDDisplayValue,
     setCurrentMaterialtypeIDDisplayValue,
@@ -267,15 +289,25 @@ export default function MaterialUpdateForm(props) {
   const [currentMaterialtypeIDValue, setCurrentMaterialtypeIDValue] =
     React.useState(undefined);
   const materialtypeIDRef = React.createRef();
+  const getIDValue = {
+    Sales: (r) => JSON.stringify({ id: r?.id }),
+  };
+  const SalesIdSet = new Set(
+    Array.isArray(Sales)
+      ? Sales.map((r) => getIDValue.Sales?.(r))
+      : getIDValue.Sales?.(Sales)
+  );
   const getDisplayValue = {
+    Sales: (r) => `${r?.quantitySold ? r?.quantitySold + " - " : ""}${r?.id}`,
     materialtypeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
   };
   const validations = {
+    items: [],
     name: [],
     quantityAvailable: [],
     price: [],
+    Sales: [],
     materialtypeID: [{ type: "Required" }],
-    items: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -293,6 +325,38 @@ export default function MaterialUpdateForm(props) {
     }
     setErrors((errors) => ({ ...errors, [fieldName]: validationResponse }));
     return validationResponse;
+  };
+  const fetchSalesRecords = async (value) => {
+    setSalesLoading(true);
+    const newOptions = [];
+    let newNext = "";
+    while (newOptions.length < autocompleteLength && newNext != null) {
+      const variables = {
+        limit: autocompleteLength * 5,
+        filter: {
+          or: [
+            { quantitySold: { contains: value } },
+            { id: { contains: value } },
+          ],
+        },
+      };
+      if (newNext) {
+        variables["nextToken"] = newNext;
+      }
+      const result = (
+        await client.graphql({
+          query: listSales.replaceAll("__typename", ""),
+          variables,
+        })
+      )?.data?.listSales?.items;
+      var loaded = result.filter(
+        (item) => !SalesIdSet.has(getIDValue.Sales?.(item))
+      );
+      newOptions.push(...loaded);
+      newNext = result.nextToken;
+    }
+    setSalesRecords(newOptions.slice(0, autocompleteLength));
+    setSalesLoading(false);
   };
   const fetchMaterialtypeIDRecords = async (value) => {
     setMaterialtypeIDLoading(true);
@@ -322,6 +386,7 @@ export default function MaterialUpdateForm(props) {
     setMaterialtypeIDLoading(false);
   };
   React.useEffect(() => {
+    fetchSalesRecords("");
     fetchMaterialtypeIDRecords("");
   }, []);
   return (
@@ -333,24 +398,33 @@ export default function MaterialUpdateForm(props) {
       onSubmit={async (event) => {
         event.preventDefault();
         let modelFields = {
+          items: items ?? null,
           name: name ?? null,
           quantityAvailable: quantityAvailable ?? null,
           price: price ?? null,
+          Sales: Sales ?? null,
           materialtypeID,
-          items: items ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
             if (Array.isArray(modelFields[fieldName])) {
               promises.push(
                 ...modelFields[fieldName].map((item) =>
-                  runValidationTasks(fieldName, item)
+                  runValidationTasks(
+                    fieldName,
+                    item,
+                    getDisplayValue[fieldName]
+                  )
                 )
               );
               return promises;
             }
             promises.push(
-              runValidationTasks(fieldName, modelFields[fieldName])
+              runValidationTasks(
+                fieldName,
+                modelFields[fieldName],
+                getDisplayValue[fieldName]
+              )
             );
             return promises;
           }, [])
@@ -367,21 +441,72 @@ export default function MaterialUpdateForm(props) {
               modelFields[key] = null;
             }
           });
+          const promises = [];
+          const salesToLink = [];
+          const salesToUnLink = [];
+          const salesSet = new Set();
+          const linkedSalesSet = new Set();
+          Sales.forEach((r) => salesSet.add(getIDValue.Sales?.(r)));
+          linkedSales.forEach((r) => linkedSalesSet.add(getIDValue.Sales?.(r)));
+          linkedSales.forEach((r) => {
+            if (!salesSet.has(getIDValue.Sales?.(r))) {
+              salesToUnLink.push(r);
+            }
+          });
+          Sales.forEach((r) => {
+            if (!linkedSalesSet.has(getIDValue.Sales?.(r))) {
+              salesToLink.push(r);
+            }
+          });
+          salesToUnLink.forEach((original) => {
+            if (!canUnlinkSales) {
+              throw Error(
+                `Sales ${original.id} cannot be unlinked from Material because materialID is a required field.`
+              );
+            }
+            promises.push(
+              client.graphql({
+                query: updateSales.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: original.id,
+                    materialID: null,
+                  },
+                },
+              })
+            );
+          });
+          salesToLink.forEach((original) => {
+            promises.push(
+              client.graphql({
+                query: updateSales.replaceAll("__typename", ""),
+                variables: {
+                  input: {
+                    id: original.id,
+                    materialID: materialRecord.id,
+                  },
+                },
+              })
+            );
+          });
           const modelFieldsToSave = {
             name: modelFields.name ?? null,
             quantityAvailable: modelFields.quantityAvailable ?? null,
             price: modelFields.price ?? null,
             materialtypeID: modelFields.materialtypeID,
           };
-          await client.graphql({
-            query: updateMaterial.replaceAll("__typename", ""),
-            variables: {
-              input: {
-                id: materialRecord.id,
-                ...modelFieldsToSave,
+          promises.push(
+            client.graphql({
+              query: updateMaterial.replaceAll("__typename", ""),
+              variables: {
+                input: {
+                  id: materialRecord.id,
+                  ...modelFieldsToSave,
+                },
               },
-            },
-          });
+            })
+          );
+          await Promise.all(promises);
           if (onSuccess) {
             onSuccess(modelFields);
           }
@@ -392,9 +517,45 @@ export default function MaterialUpdateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "MaterialUpdateForm")}
+      {...getOverrideProps(overrides, "MaterialSearch")}
       {...rest}
     >
+      <Autocomplete
+        label="Material"
+        options={[]}
+        onSelect={({ id, label }) => {
+          setItems(id);
+          runValidationTasks("items", id);
+        }}
+        onClear={() => {
+          setItems("");
+        }}
+        defaultValue={items}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              items: value,
+              name,
+              quantityAvailable,
+              price,
+              Sales,
+              materialtypeID,
+            };
+            const result = onChange(modelFields);
+            value = result?.items ?? value;
+          }
+          if (errors.items?.hasError) {
+            runValidationTasks("items", value);
+          }
+          setItems(value);
+        }}
+        onBlur={() => runValidationTasks("items", items)}
+        errorMessage={errors.items?.errorMessage}
+        hasError={errors.items?.hasError}
+        labelHidden={false}
+        {...getOverrideProps(overrides, "items")}
+      ></Autocomplete>
       <TextField
         label="Name"
         isRequired={false}
@@ -404,11 +565,12 @@ export default function MaterialUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              items,
               name: value,
               quantityAvailable,
               price,
+              Sales,
               materialtypeID,
-              items,
             };
             const result = onChange(modelFields);
             value = result?.name ?? value;
@@ -436,11 +598,12 @@ export default function MaterialUpdateForm(props) {
             : parseInt(e.target.value);
           if (onChange) {
             const modelFields = {
+              items,
               name,
               quantityAvailable: value,
               price,
+              Sales,
               materialtypeID,
-              items,
             };
             const result = onChange(modelFields);
             value = result?.quantityAvailable ?? value;
@@ -470,11 +633,12 @@ export default function MaterialUpdateForm(props) {
             : parseFloat(e.target.value);
           if (onChange) {
             const modelFields = {
+              items,
               name,
               quantityAvailable,
               price: value,
+              Sales,
               materialtypeID,
-              items,
             };
             const result = onChange(modelFields);
             value = result?.price ?? value;
@@ -490,16 +654,98 @@ export default function MaterialUpdateForm(props) {
         {...getOverrideProps(overrides, "price")}
       ></TextField>
       <ArrayField
+        onChange={async (items) => {
+          let values = items;
+          if (onChange) {
+            const modelFields = {
+              items,
+              name,
+              quantityAvailable,
+              price,
+              Sales: values,
+              materialtypeID,
+            };
+            const result = onChange(modelFields);
+            values = result?.Sales ?? values;
+          }
+          setSales(values);
+          setCurrentSalesValue(undefined);
+          setCurrentSalesDisplayValue("");
+        }}
+        currentFieldValue={currentSalesValue}
+        label={"Sales"}
+        items={Sales}
+        hasError={errors?.Sales?.hasError}
+        runValidationTasks={async () =>
+          await runValidationTasks("Sales", currentSalesValue)
+        }
+        errorMessage={errors?.Sales?.errorMessage}
+        getBadgeText={getDisplayValue.Sales}
+        setFieldValue={(model) => {
+          setCurrentSalesDisplayValue(
+            model ? getDisplayValue.Sales(model) : ""
+          );
+          setCurrentSalesValue(model);
+        }}
+        inputFieldRef={SalesRef}
+        defaultFieldValue={""}
+      >
+        <Autocomplete
+          label="Sales"
+          isRequired={false}
+          isReadOnly={false}
+          placeholder="Search Sales"
+          value={currentSalesDisplayValue}
+          options={salesRecords
+            .filter((r) => !SalesIdSet.has(getIDValue.Sales?.(r)))
+            .map((r) => ({
+              id: getIDValue.Sales?.(r),
+              label: getDisplayValue.Sales?.(r),
+            }))}
+          isLoading={SalesLoading}
+          onSelect={({ id, label }) => {
+            setCurrentSalesValue(
+              salesRecords.find((r) =>
+                Object.entries(JSON.parse(id)).every(
+                  ([key, value]) => r[key] === value
+                )
+              )
+            );
+            setCurrentSalesDisplayValue(label);
+            runValidationTasks("Sales", label);
+          }}
+          onClear={() => {
+            setCurrentSalesDisplayValue("");
+          }}
+          onChange={(e) => {
+            let { value } = e.target;
+            fetchSalesRecords(value);
+            if (errors.Sales?.hasError) {
+              runValidationTasks("Sales", value);
+            }
+            setCurrentSalesDisplayValue(value);
+            setCurrentSalesValue(undefined);
+          }}
+          onBlur={() => runValidationTasks("Sales", currentSalesDisplayValue)}
+          errorMessage={errors.Sales?.errorMessage}
+          hasError={errors.Sales?.hasError}
+          ref={SalesRef}
+          labelHidden={true}
+          {...getOverrideProps(overrides, "Sales")}
+        ></Autocomplete>
+      </ArrayField>
+      <ArrayField
         lengthLimit={1}
         onChange={async (items) => {
           let value = items[0];
           if (onChange) {
             const modelFields = {
+              items,
               name,
               quantityAvailable,
               price,
+              Sales,
               materialtypeID: value,
-              items,
             };
             const result = onChange(modelFields);
             value = result?.materialtypeID ?? value;
@@ -587,33 +833,6 @@ export default function MaterialUpdateForm(props) {
           {...getOverrideProps(overrides, "materialtypeID")}
         ></Autocomplete>
       </ArrayField>
-      <SelectField
-        label="Materials"
-        placeholder=" "
-        value={items}
-        onChange={(e) => {
-          let { value } = e.target;
-          if (onChange) {
-            const modelFields = {
-              name,
-              quantityAvailable,
-              price,
-              materialtypeID,
-              items: value,
-            };
-            const result = onChange(modelFields);
-            value = result?.items ?? value;
-          }
-          if (errors.items?.hasError) {
-            runValidationTasks("items", value);
-          }
-          setItems(value);
-        }}
-        onBlur={() => runValidationTasks("items", items)}
-        errorMessage={errors.items?.errorMessage}
-        hasError={errors.items?.hasError}
-        {...getOverrideProps(overrides, "items")}
-      ></SelectField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}
@@ -621,26 +840,7 @@ export default function MaterialUpdateForm(props) {
         <Flex
           gap="15px"
           {...getOverrideProps(overrides, "RightAlignCTASubFlex")}
-        >
-          <Button
-            children="Delete"
-            type="button"
-            onClick={() => {
-              onCancel && onCancel();
-            }}
-            {...getOverrideProps(overrides, "CancelButton")}
-          ></Button>
-          <Button
-            children="Submit"
-            type="submit"
-            variation="primary"
-            isDisabled={
-              !(idProp || materialModelProp) ||
-              Object.values(errors).some((e) => e?.hasError)
-            }
-            {...getOverrideProps(overrides, "SubmitButton")}
-          ></Button>
-        </Flex>
+        ></Flex>
       </Flex>
     </Grid>
   );

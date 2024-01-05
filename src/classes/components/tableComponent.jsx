@@ -96,6 +96,47 @@ export function RowFinancialSum({ outputColumns }) {
 RowFinancialSum.propTypes = {
   outputColumns: PropTypes.node.isRequired,
 };
+
+export function RowAvailableMaterials({ outputColumns }) {
+  return (
+    <>
+      <TableHead>
+        <TableRow>
+          <TableCell as="th">Material Type</TableCell>
+          <TableCell as="th">Material name</TableCell>
+          <TableCell as="th">Quantity available</TableCell>
+          <TableCell as="th">Price</TableCell>
+        </TableRow>
+      </TableHead>
+      {outputColumns}
+    </>
+  );
+}
+// Prop validation
+RowAvailableMaterials.propTypes = {
+  outputColumns: PropTypes.node.isRequired,
+};
+
+export function RowPopularSoldMaterials({ outputColumns }) {
+  return (
+    <>
+      <TableHead>
+        <TableRow>
+          <TableCell as="th">Material Type</TableCell>
+          <TableCell as="th">Material name</TableCell>
+          <TableCell as="th">Total quantity sold</TableCell>
+          <TableCell as="th">Total Sales price</TableCell>
+        </TableRow>
+      </TableHead>
+      {outputColumns}
+    </>
+  );
+}
+// Prop validation
+RowPopularSoldMaterials.propTypes = {
+  outputColumns: PropTypes.node.isRequired,
+};
+
 export function ColumnSalesByEmployee({ result }) {
   let id = 0;
   return (
@@ -157,5 +198,45 @@ export function ColumnFinancialSum({ result }) {
 }
 
 ColumnFinancialSum.propTypes = {
+  result: PropTypes.array.isRequired,
+};
+
+export function ColumnAvailableMaterials({ result }) {
+  let id = 0;
+  return (
+    <TableBody>
+      {result.map((iterator) => (
+        <TableRow key={id++}>
+          <TableCell>{iterator.materialType}</TableCell>
+          <TableCell>{iterator.materialName}</TableCell>
+          <TableCell>{iterator.materialQuantity}</TableCell>
+          <TableCell>{iterator.materialPrice}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  );
+}
+
+ColumnAvailableMaterials.propTypes = {
+  result: PropTypes.array.isRequired,
+};
+
+export function ColumnPopularSoldMaterials({ result }) {
+  let id = 0;
+  return (
+    <TableBody>
+      {result.map((iterator) => (
+        <TableRow key={id++}>
+          <TableCell>{iterator.materialType}</TableCell>
+          <TableCell>{iterator.materialName}</TableCell>
+          <TableCell>{iterator.totalQuantitySold}</TableCell>
+          <TableCell>{iterator.totalSalesValue}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  );
+}
+
+ColumnPopularSoldMaterials.propTypes = {
   result: PropTypes.array.isRequired,
 };
