@@ -1,6 +1,7 @@
 import React from "react";
 import { HomeComponent } from "../../classes/components/homeComponent";
 import {
+  ComponentStateContext,
   DataModelContext,
   HelpersContext,
 } from "../../contexts/data_models/context";
@@ -18,6 +19,7 @@ export function FuncHomeOverride() {
 
   const { EmployeeObject } = React.useContext(DataModelContext);
   const { UtilsObject } = React.useContext(HelpersContext);
+  const { ComponentStateObject } = React.useContext(ComponentStateContext);
 
   const homeOverride = {
     text_page: {
@@ -56,5 +58,43 @@ export function FuncHomeOverride() {
     },
   };
 
-  return { homeOverride };
+  const componentObjectState = () => {
+    return (
+      ComponentStateObject.showCreateMaterialPage ||
+      ComponentStateObject.showCreateMaterialTypePage ||
+      ComponentStateObject.showCreateCompanyPage ||
+      ComponentStateObject.showCreateEmployeePage ||
+      ComponentStateObject.showCreateCustomerPage ||
+      ComponentStateObject.showCreateMallPage ||
+      ComponentStateObject.showCreatePositionPage ||
+      ComponentStateObject.showCreateSalesPage ||
+      /*Update */
+      ComponentStateObject.showUpdateMaterialPage ||
+      ComponentStateObject.showUpdateMaterialTypePage ||
+      ComponentStateObject.showUpdateCompanyPage ||
+      ComponentStateObject.showUpdateEmployeePage ||
+      ComponentStateObject.showUpdateCustomerPage ||
+      ComponentStateObject.showUpdateMallPage ||
+      ComponentStateObject.showUpdatePositionPage ||
+      ComponentStateObject.showUpdateSalesPage ||
+      /*Report */
+      ComponentStateObject.reportSalesByEmployee ||
+      ComponentStateObject.reportCustomerPurchaseOptions ||
+      ComponentStateObject.reportFinancialSumReport ||
+      ComponentStateObject.reportAvailableMaterials ||
+      ComponentStateObject.reportPopularSoldMaterials
+    );
+  };
+
+  const componentObjectReportState = () => {
+    return (
+      ComponentStateObject.reportSalesByEmployee ||
+      ComponentStateObject.reportCustomerPurchaseOptions ||
+      ComponentStateObject.reportFinancialSumReport ||
+      ComponentStateObject.reportAvailableMaterials ||
+      ComponentStateObject.reportPopularSoldMaterials
+    );
+  };
+
+  return { homeOverride, componentObjectState, componentObjectReportState };
 }

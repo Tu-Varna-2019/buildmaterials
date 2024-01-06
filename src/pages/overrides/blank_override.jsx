@@ -1,14 +1,17 @@
+import { Button } from "@aws-amplify/ui-react";
 import React, { useEffect } from "react";
 import { BlankComponent } from "../../classes/components/blankComponent";
 import {
   ComponentStateContext,
   HelpersContext,
 } from "../../contexts/data_models/context";
+import { TableState } from "../../classes/components/states/tableState";
 
 export function BlankOverride() {
   const { handleExitClick } = BlankComponent();
   const { UtilsObject } = React.useContext(HelpersContext);
   const { ComponentStateObject } = React.useContext(ComponentStateContext);
+  const { exportTableToCSVBlob } = TableState();
 
   useEffect(() => {
     const pageMapping = {
@@ -52,5 +55,19 @@ export function BlankOverride() {
     },
   };
 
-  return { blankOverride };
+  const ButtonExportTableCSV = () => {
+    return (
+      <Button
+        variation="primary"
+        colorTheme="info"
+        loadingText=""
+        onClick={() => exportTableToCSVBlob()}
+        isDisabled={UtilsObject.tableDataState.length === 0}
+      >
+        Export table to CSV 📄
+      </Button>
+    );
+  };
+
+  return { blankOverride, ButtonExportTableCSV };
 }

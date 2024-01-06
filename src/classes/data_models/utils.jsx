@@ -14,7 +14,7 @@ export function Utils() {
   const [alertBoxMessage, setAlertBoxMessage] = React.useState("");
   const [alertBoxHeading, setAlertBoxHeading] = React.useState("");
   const [alertBoxVariation, setAlertBoxVariation] = React.useState("");
-  const [tableResultTurnOver, setTableResultTurnOver] = React.useState(null);
+  const [tableDataState, setTableDataState] = React.useState([]);
 
   const showAlertBoxFull = (heading, message, variation) => {
     setAlertBoxHeading(heading);
@@ -43,7 +43,7 @@ export function Utils() {
     client,
     navigate,
     logger,
-    tableResultTurnOver,
-    setTableResultTurnOver,
+    tableDataState,
+    setTableDataState,
   };
 }

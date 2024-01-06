@@ -159,7 +159,6 @@ export function HomeComponent() {
     handleSelectFieldReportOptions,
     selectFieldCreateUpdateOptions,
     handleSelectFieldUpdateOptions,
-
     handleSelectFieldInqueryOptions,
     handleSelectFieldCreateOptions,
     handleLogOutClick,
