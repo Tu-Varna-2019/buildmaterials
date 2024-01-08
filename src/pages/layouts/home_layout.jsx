@@ -84,9 +84,11 @@ export default function HomeLayout() {
             )}
 
             {/*Report form */}
-            {componentObjectReportState() && <ButtonExportTableCSV />}
-
-            <TableComponent />
+            {componentObjectReportState() && (
+              <>
+                <ButtonExportTableCSV /> <TableComponent />
+              </>
+            )}
           </View>
         </View>
       )}
