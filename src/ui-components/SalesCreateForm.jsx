@@ -255,17 +255,17 @@ export default function SalesCreateForm(props) {
     React.useState(undefined);
   const materialIDRef = React.createRef();
   const getDisplayValue = {
-    employeeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
-    customerID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
-    materialID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    employeeID: (r) => `${r?.name}`,
+    customerID: (r) => `${r?.name}`,
+    materialID: (r) => `${r?.name}`,
   };
   const validations = {
     quantitySold: [
       { type: "Required" },
       {
         type: "GreaterThanNum",
-        numValues: [-1],
-        validationMessage: "Quantity must be a positive number!",
+        numValues: [0],
+        validationMessage: "The value must be greater than 0",
       },
     ],
     salesDate: [{ type: "Required" }],
@@ -273,8 +273,8 @@ export default function SalesCreateForm(props) {
       { type: "Required" },
       {
         type: "GreaterThanNum",
-        numValues: [-1],
-        validationMessage: "The value must be greater than -1",
+        numValues: [0],
+        validationMessage: "The value must be greater than 0",
       },
     ],
     employeeID: [{ type: "Required" }],
@@ -305,9 +305,7 @@ export default function SalesCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;
@@ -332,9 +330,7 @@ export default function SalesCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;
@@ -359,9 +355,7 @@ export default function SalesCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

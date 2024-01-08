@@ -221,7 +221,7 @@ export default function MallCreateForm(props) {
       : getIDValue.Employees?.(Employees)
   );
   const getDisplayValue = {
-    Employees: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    Employees: (r) => `${r?.name}`,
   };
   const validations = {
     name: [{ type: "Required" }],
@@ -251,9 +251,7 @@ export default function MallCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

@@ -228,18 +228,24 @@ export default function MaterialCreateForm(props) {
     React.useState(undefined);
   const materialtypeIDRef = React.createRef();
   const getDisplayValue = {
-    materialtypeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    materialtypeID: (r) => `${r?.name}`,
   };
   const validations = {
     name: [{ type: "Required" }],
     quantityAvailable: [
       {
         type: "GreaterThanNum",
-        numValues: [-1],
-        validationMessage: "Quantity must be a positive number",
+        numValues: [0],
+        validationMessage: "The value must be greater than 0",
       },
     ],
-    price: [],
+    price: [
+      {
+        type: "GreaterThanNum",
+        numValues: [0],
+        validationMessage: "The value must be greater than 0",
+      },
+    ],
     materialtypeID: [{ type: "Required" }],
   };
   const runValidationTasks = async (
@@ -266,9 +272,7 @@ export default function MaterialCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

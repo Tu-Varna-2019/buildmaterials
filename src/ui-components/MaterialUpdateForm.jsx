@@ -268,12 +268,24 @@ export default function MaterialUpdateForm(props) {
     React.useState(undefined);
   const materialtypeIDRef = React.createRef();
   const getDisplayValue = {
-    materialtypeID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    materialtypeID: (r) => `${r?.name}`,
   };
   const validations = {
     name: [],
-    quantityAvailable: [],
-    price: [],
+    quantityAvailable: [
+      {
+        type: "GreaterThanNum",
+        numValues: [0],
+        validationMessage: "The value must be greater than 0",
+      },
+    ],
+    price: [
+      {
+        type: "GreaterThanNum",
+        numValues: [0],
+        validationMessage: "The value must be greater than 0",
+      },
+    ],
     materialtypeID: [{ type: "Required" }],
     items: [],
   };
@@ -301,9 +313,7 @@ export default function MaterialUpdateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

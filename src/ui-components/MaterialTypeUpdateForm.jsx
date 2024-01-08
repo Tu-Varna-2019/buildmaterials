@@ -252,7 +252,7 @@ export default function MaterialTypeUpdateForm(props) {
       : getIDValue.Materials?.(Materials)
   );
   const getDisplayValue = {
-    Materials: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    Materials: (r) => `${r?.name}`,
   };
   const validations = {
     name: [],
@@ -283,9 +283,7 @@ export default function MaterialTypeUpdateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

@@ -230,8 +230,8 @@ export default function EmployeeCreateForm(props) {
   const [currentMallIDValue, setCurrentMallIDValue] = React.useState(undefined);
   const mallIDRef = React.createRef();
   const getDisplayValue = {
-    positionID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
-    mallID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    positionID: (r) => `${r?.name}`,
+    mallID: (r) => `${r?.name}`,
   };
   const validations = {
     name: [{ type: "Required" }],
@@ -263,9 +263,7 @@ export default function EmployeeCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;
@@ -290,9 +288,7 @@ export default function EmployeeCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

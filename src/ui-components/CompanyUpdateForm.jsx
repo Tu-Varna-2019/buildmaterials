@@ -250,7 +250,7 @@ export default function CompanyUpdateForm(props) {
       : getIDValue.Customers?.(Customers)
   );
   const getDisplayValue = {
-    Customers: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    Customers: (r) => `${r?.name}`,
   };
   const validations = {
     name: [],
@@ -281,9 +281,7 @@ export default function CompanyUpdateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;

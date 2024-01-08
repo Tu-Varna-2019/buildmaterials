@@ -227,7 +227,7 @@ export default function CustomerCreateForm(props) {
     React.useState(undefined);
   const companyIDRef = React.createRef();
   const getDisplayValue = {
-    companyID: (r) => `${r?.name ? r?.name + " - " : ""}${r?.id}`,
+    companyID: (r) => `${r?.name}`,
   };
   const validations = {
     name: [{ type: "Required" }],
@@ -260,9 +260,7 @@ export default function CustomerCreateForm(props) {
     while (newOptions.length < autocompleteLength && newNext != null) {
       const variables = {
         limit: autocompleteLength * 5,
-        filter: {
-          or: [{ name: { contains: value } }, { id: { contains: value } }],
-        },
+        filter: { or: [{ name: { contains: value } }] },
       };
       if (newNext) {
         variables["nextToken"] = newNext;
