@@ -126,11 +126,12 @@ export function TableState() {
         sale.customerID,
         sale.materialID
       );
+      const invoiceStatuText = customer.invoiceStatus ? "Yes" : "No";
 
       result.push([
         customer.name,
         customer.phone,
-        customer.invoiceStatus,
+        invoiceStatuText,
         customer.bulstat,
         company.name,
         sale.salesDate,
