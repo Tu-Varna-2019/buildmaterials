@@ -5,7 +5,7 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # Specify the package ecosystem (e.g., npm, bundler, composer, etc.)
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "npm" # Specify the package ecosystem as "maven" for Java
+    directory: "/" # Location of your Maven project (usually the root directory)
     schedule:
       interval: "weekly"
